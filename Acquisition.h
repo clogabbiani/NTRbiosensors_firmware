@@ -71,8 +71,17 @@ void acquireData(uint16_t* sensorData, const int* enPins, const int* addPins, co
             int sensorValue = analogRead(ADC_PIN);
             sensorData[sensorIndex] = convertADCValue(sensorValue);
 
+            Serial.print("Sensore ");
+            Serial.println(sensorIndex);
+            Serial.print("Raw data ");
+            Serial.println(sensorValue);
+            Serial.print("Converted data ");
+            Serial.println(sensorData[sensorIndex]);
+
             // Controlla eventuali errori
             checkErrorRange(sensorData[sensorIndex], sensorIndex);
+
+            Serial.println();
         }
     }
 }

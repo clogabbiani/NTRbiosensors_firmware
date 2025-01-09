@@ -56,9 +56,16 @@ void setup() {
     EEPROM.begin(EEPROM_SIZE);
     id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
     if (id_r == 0) {
-        //Codice per acquisire un progressivo id tramite bluetooth
+        //Da inserire: Codice per acquisire un progressivo id tramite bluetooth
         EEPROM.write(0, id); 
         EEPROM.commit();
+        Serial.print("Nuovo device registrato con ID: ");
+        Serial.println(id);
+    }
+    else {
+        id = id_r;
+        Serial.print("Device ID: ");
+        Serial.println(id);
     }
 }
 

@@ -19,7 +19,7 @@ const uint32_t intervalloTrasmissione = 3600000; // 60 minuti in millisecondi
 const float frequenzaTrasmissione = 0.88; // Frequenza di trasmissione in kb/s
 float campionamentoFrequenza = 10.0; // Frequenza di campionamento
 const int adcvalue = 12.0;   // risoluzione dell'ADC
-int id; //id dispositivo
+int id, id_r; //id dispositivo
 uint16_t V_bat; //Tensione batteria
 
 // Dichiarazione dei PIN
@@ -54,10 +54,10 @@ void setup() {
 
     //Configura EEPROM e acquisisce/registra id device
     EEPROM.begin(EEPROM_SIZE);
-    id = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
-    if (id == 0) {
+    id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
+    if (id_r == 0) {
         //Codice per acquisire un progressivo id tramite bluetooth
-        EEPROM.write(0, 0); //cambiare il secondo parametro con il nuovo id dispositivo ottenuto
+        EEPROM.write(0, id); 
         EEPROM.commit();
     }
 }

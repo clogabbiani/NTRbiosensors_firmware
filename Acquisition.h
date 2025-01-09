@@ -108,7 +108,7 @@ byte I2C_scanner() {
 
 uint16_t I2C_battery_level() {
 
-    uint16_t V_MSB, V_LSB, Meas_V;
+    uint16_t V_MSB, V_LSB, Meas_V, Meas_V_conv;
     byte ind;
     ind = I2C_scanner();
 
@@ -132,10 +132,16 @@ uint16_t I2C_battery_level() {
     V_MSB = V_MSB << 16;
     Meas_V = V_MSB | V_LSB;
 
+    Meas_V_conv = 23.6 * Meas_V/65535;
+
     Wire.beginTransmission(ind);
     Wire.write(0x01); //Indirizzo del Control Register
     Wire.write(0x3C); //Valore del Control Register da scrivere per far rimetter configurazione default (ADC sleep)
     Wire.endTransmission();
 
-    return Meas_V;
+    Serial.print("Acquisizione Coulomb counter[HEX]: ");
+    Serial.println(Meas_V, HEX);
+    Serial.print("Tensione batteria: ");
+    Serial.println(Meas_V_conv);
+    return Meas_V_conv;
 }

@@ -30,7 +30,6 @@ const int sdaPin = 19;
 const int sclPin = 20;
 
 void setup() {
-    Serial.begin(115200);
 
     // Configura i PIN di Enable come OUTPUT e inizializza a HIGH (disabilitati)
     for (int i = 0; i < 4; i++) {
@@ -59,13 +58,9 @@ void setup() {
         //Da inserire: Codice per acquisire un progressivo id tramite bluetooth
         EEPROM.write(0, id); 
         EEPROM.commit();
-        Serial.print("Nuovo device registrato con ID: ");
-        Serial.println(id);
     }
     else {
         id = id_r;
-        Serial.print("Device ID: ");
-        Serial.println(id);
     }
 }
 

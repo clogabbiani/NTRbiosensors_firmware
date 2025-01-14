@@ -50,8 +50,6 @@ uint16_t convertADCValue(int adcValue) {
 // funzione di supporto: controllare che i valori siano accettabili
 void checkErrorRange(uint16_t value, int sensorIndex) {
     if (value < minThreshold || value > maxThreshold) {
-        Serial.print("Valore fuori range per il sensore ");
-        Serial.println(sensorIndex);
     }
 }
 
@@ -71,17 +69,9 @@ void acquireData(uint16_t* sensorData, const int* enPins, const int* addPins, co
             int sensorValue = analogRead(ADC_PIN);
             sensorData[sensorIndex] = convertADCValue(sensorValue);
 
-            Serial.print("Sensore ");
-            Serial.println(sensorIndex);
-            Serial.print("Raw data ");
-            Serial.println(sensorValue);
-            Serial.print("Converted data ");
-            Serial.println(sensorData[sensorIndex]);
-
             // Controlla eventuali errori
             checkErrorRange(sensorData[sensorIndex], sensorIndex);
 
-            Serial.println();
         }
     }
 }
@@ -139,9 +129,4 @@ uint16_t I2C_battery_level() {
     Wire.write(0x3C); //Valore del Control Register da scrivere per far rimetter configurazione default (ADC sleep)
     Wire.endTransmission();
 
-    Serial.print("Acquisizione Coulomb counter[HEX]: ");
-    Serial.println(Meas_V, HEX);
-    Serial.print("Tensione batteria: ");
-    Serial.println(Meas_V_conv);
-    return Meas_V_conv;
 }

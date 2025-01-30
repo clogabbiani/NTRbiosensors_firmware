@@ -1,7 +1,14 @@
 #include <Arduino.h>
-#include "Acquisition.h"  // Modulo per la gestione dei MUX e acquisizione ADC
-#include <Wire.h>   //Libreria per I2C
+
 #include <EEPROM.h> //Libreria per scrivere/leggere su memoria FLASH
+#include <Wire.h>   //Libreria per I2C
+
+#include "Acquisition.h" // Modulo per l'acquisizione dei dati
+
+// per compressione LZW
+#include <map>
+#include <vector>
+#include <string>
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
@@ -11,6 +18,8 @@
 */
 
 #define EEPROM_SIZE 1
+#define led 16 
+#define DICT_MAX_SIZE 4096  // Limite per il dizionario (12-bit)    
 
 // Variabili globali
 const uint16_t sogliaAllarme = 30000; // Soglia per l'allarme (in grammi, quindi 30 kg)
@@ -20,24 +29,31 @@ const float frequenzaTrasmissione = 0.88; // Frequenza di trasmissione in kb/s
 float campionamentoFrequenza = 10.0; // Frequenza di campionamento
 const int adcvalue = 12.0;   // risoluzione dell'ADC
 int id, id_r; //id dispositivo
-uint16_t V_bat; //Tensione batteria
+float V_bat; //Tensione batteria
+float valoriSensori[59];
+uint32_t currentTimestamp;
 
 // Dichiarazione dei PIN
-const int enablePins[4] = { 18, 25, 22, 21 };   // PIN di Enable per i MUX (attivo basso)
-const int addressPins[4] = { 26, 24, 17, 23 }; // PIN di Indirizzo per il canale del MUX
-const int ADCPINs[4] = { 38, 39, 5, 4 };  // PIN di ADC
-const int sdaPin = 19;
-const int sclPin = 20;
+const int enablePins[4] = { 10, 48, 14, 13 };   // PIN di Enable per i MUX (attivo basso) 
+const int addressPins[4] = { 45, 47, 9, 21 }; // PIN di Indirizzo per il canale del MUX
+const int ADCPINs[4] = { 1, 2, 5, 4 };  // PIN di ADC
+const int sdaPin = 11;
+const int sclPin = 12;
 
 void setup() {
 
-    // Configura i PIN di Enable come OUTPUT e inizializza a HIGH (disabilitati)
+    pinMode(led, OUTPUT);
+    digitalWrite(led, HIGH);
+    delay(1000);
+    digitalWrite(led, LOW);
+
+    // Configura i PIN di Enable come OUTPUT e li spegne
     for (int i = 0; i < 4; i++) {
         pinMode(enablePins[i], OUTPUT);
         digitalWrite(enablePins[i], HIGH);
     }
 
-    // Configura i PIN di Indirizzo come OUTPUT
+    // Configura i PIN di Indirizzo come OUTPUT e li accende
     for (int i = 0; i < 4; i++) {
         pinMode(addressPins[i], OUTPUT);
         digitalWrite(addressPins[i], LOW);
@@ -52,7 +68,7 @@ void setup() {
     Wire.begin(sdaPin, sclPin);
 
     //Configura EEPROM e acquisisce/registra id device
-    EEPROM.begin(EEPROM_SIZE);
+    /*EEPROM.begin(EEPROM_SIZE);
     id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
     if (id_r == 0) {
         //Da inserire: Codice per acquisire un progressivo id tramite bluetooth
@@ -61,13 +77,15 @@ void setup() {
     }
     else {
         id = id_r;
-    }
+    }*/
+
+    
 }
 
 // Loop principale del firmware
 void loop() {
     // 1. Acquisizione dati
-    uint16_t valoriSensori[59];
+    currentTimestamp = millis(); // Timestamp attuale
     acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
     V_bat = I2C_battery_level();  //Acquisizione livello batteria
 
@@ -94,6 +112,9 @@ void loop() {
 
     */
 
-    delay(100); // Attendere un po' prima del prossimo ciclo
+    digitalWrite(led, LOW);
+    delay(1000); // Attendere un po' prima del prossimo ciclo
+    digitalWrite(led, HIGH);
+    delay(1000);
 }
 

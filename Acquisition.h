@@ -5,27 +5,42 @@
 #define NUM_SENSORS 59
 #define MUX_COUNT 4
 #define THRESHOLD 30000 // Soglia in grammi
-#define minThreshold 1
+#define minThreshold 0.1
 #define maxThreshold 80
-#define conversionFactor 1
+#define conversionFactor 1.0 // Fattore di conversione per i valori dell'ADC
+#define BATCH_SIZE 100  // Numero di righe per batch
 
+// Struttura per i dati del sensore
+struct SensorData {
+    uint32_t timestamp;       // Timestamp in millisecondi
+    float values[NUM_SENSORS]; // Valori acquisiti dai sensori
+};
+
+// aggiunta di un buffer per i dati
+SensorData dataBuffer[BATCH_SIZE];
+int bufferIndex = 0;
+
+// Funzione per selezionare il MUX e il canale
 void selectSensorMux(int muxIndex, int channel, const int* enPins, const int* addPins) {
-    // Disabilita tutti i MUX
+
+    // Disabilita tutti i MUX mettendoli su HIGH
     for (int i = 0; i < 4; i++) {
-        digitalWrite(enPins[i], HIGH); // HIGH disabilita il MUX
+        digitalWrite(enPins[i], HIGH);
     }
 
-    // Abilita il MUX selezionato (attivo basso)
+    // Abilita il MUX selezionato (attivo=low, spento=HIGH)
     digitalWrite(enPins[muxIndex], LOW);
 
     // Imposta l'indirizzo del canale sui PIN di Indirizzo
     for (int i = 0; i < 4; i++) {
-        digitalWrite(addPins[i], (channel >> i) & 1); // Estrae il bit i-esimo dell'indirizzo
+		// Imposta il bit i-esimo dell'indirizzo
+        digitalWrite(addPins[i], (channel >> i) & 1);
     }
 
-    delayMicroseconds(10); // Tempo di stabilizzazione del segnale
+    delayMicroseconds(100); // Tempo di stabilizzazione del segnale
 }
 
+// Funzione per selezionare il pin ADC in base al canale
 int selectADCpin(int channel, const int* adcPins) {
     switch (channel) {
         case 0 ... 15:
@@ -41,24 +56,56 @@ int selectADCpin(int channel, const int* adcPins) {
 }
 
 // funzione di supporto: converte ADC value in un'unità di misura specifica (di pressione)
-uint16_t convertADCValue(int adcValue) {
+float convertADCValue(int adcValue) {
     float voltage = (adcValue / 4095.0) * 3.3;  // Converti a tensione, ad esempio
-    // Conversione in kg o altro in base a calibrazione
-    return static_cast<uint16_t>(voltage * conversionFactor);
+	// Conversione in kg o altro in base a calibrazione (conversionFactor)
+    return static_cast<float>(voltage * conversionFactor);
 }
 
 // funzione di supporto: controllare che i valori siano accettabili
 void checkErrorRange(uint16_t value, int sensorIndex) {
     if (value < minThreshold || value > maxThreshold) {
+		// Gestisci errore
+		// Serial.print("Errore: valore fuori range per sensore ");
+		// Serial.println(sensorIndex);
     }
 }
 
-void acquireData(uint16_t* sensorData, const int* enPins, const int* addPins, const int* adcPins) {
-    int sensorsPerMux = NUM_SENSORS / 4; // Numero di sensori per MUX
-    for (int mux = 0; mux < 4; mux++) {
-        for (int channel = 0; channel < sensorsPerMux; channel++) {
-            int sensorIndex = mux * sensorsPerMux + channel;
+void compressAndSendData() {
+    // Placeholder per la compressione e l'invio dei dati
+    // Puoi aggiungere qui la logica per comprimere i dati e inviarli
+    // Serial.println("Compressing and sending data...");
+}
 
+// Funzione per comprimere e inviare i dati
+void addDataToBuffer(uint32_t timestamp, float* values) {
+    if (bufferIndex < BATCH_SIZE) {
+        dataBuffer[bufferIndex].timestamp = timestamp;
+		// Copia i valori nel buffer
+        memcpy(dataBuffer[bufferIndex].values, values, sizeof(float) * NUM_SENSORS);
+        bufferIndex++;
+    }
+    else {
+        // Gestisci il caso in cui il buffer è pieno
+        compressAndSendData();
+        bufferIndex = 0;
+    }
+}
+
+// Funzione per acquisire i dati dai sensori
+void acquireData(float* sensorData, const int* enPins, const int* addPins, const int* adcPins) {
+
+	uint32_t currentTimestamp = millis(); // Timestamp attuale
+
+    int sensorsPerMux = NUM_SENSORS / 4; // Numero di sensori per MUX
+	// Per ogni MUX
+    for (int mux = 0; mux < 4; mux++) {
+		// Per ogni canale del MUX
+        for (int channel = 0; channel < sensorsPerMux; channel++) {
+
+			// Calcola l'indice del sensore
+            int sensorIndex = mux * sensorsPerMux + channel;
+         
             // Seleziona il MUX e il canale
             selectSensorMux(mux, channel, enPins, addPins);
 
@@ -67,38 +114,48 @@ void acquireData(uint16_t* sensorData, const int* enPins, const int* addPins, co
 
             // Legge il valore del sensore dall'ADC
             int sensorValue = analogRead(ADC_PIN);
+
+			// Converte il valore dell'ADC in un'unità di misura specifica
             sensorData[sensorIndex] = convertADCValue(sensorValue);
 
-            // Controlla eventuali errori
+			// Controlla che i valori siano accettabili
             checkErrorRange(sensorData[sensorIndex], sensorIndex);
 
         }
     }
+
+    // Aggiungi dati al buffer
+    addDataToBuffer(currentTimestamp, sensorData);
 }
 
+
+
+//              ----  I2C ----
+// 
+// Funzione per la scansione I2C
 byte I2C_scanner() {
-    byte error, address;
+    byte error, address, address_return;
     int device_found;
 
-    address = 1;
     device_found = 0;
 
-    while (address < 127 && device_found == 0) {
+	// Scansione degli indirizzi I2C
+    for (address = 1; address < 128; address++) {
         Wire.beginTransmission(address);
-        error = Wire.endTransmission(); //Questa funziona ritorna 0 se slave presente, altrimenti 4
-        if (error == 0) {
-            device_found = 1;
-        }
-        else if (error == 4) {
-            address++;
-        }
+        error = Wire.endTransmission(); //Questa funziona ritorna 0 se errore presente, altrimenti 1
+            if (error == 0) {
+                device_found = 1;
+                address_return = address;
+            }
     }
-    return address;
+    return address_return;
 }
 
-uint16_t I2C_battery_level() {
+// Funzione per acquisire il livello della batteria tramite I2C
+float I2C_battery_level() {
 
-    uint16_t V_MSB, V_LSB, Meas_V, Meas_V_conv;
+    uint16_t V_MSB, V_LSB, Meas_V;
+    float Meas_V_conv;
     byte ind;
     ind = I2C_scanner();
 
@@ -109,24 +166,28 @@ uint16_t I2C_battery_level() {
 
     Wire.beginTransmission(ind);
     Wire.write(0x08);
-    Wire.endTransmission();
-    Wire.requestFrom(ind, (uint8_t)1);
+    Wire.endTransmission(false);
+    Wire.requestFrom(ind, 1);
     V_MSB = Wire.read();
+    Wire.endTransmission();
 
     Wire.beginTransmission(ind);
     Wire.write(0x09);
-    Wire.endTransmission();
-    Wire.requestFrom(ind, (uint8_t)1);
+    Wire.endTransmission(false);
+    Wire.requestFrom(ind, 1);
     V_LSB = Wire.read();
+    Wire.endTransmission();
 
-    V_MSB = V_MSB << 16;
+    V_MSB = V_MSB << 8;
     Meas_V = V_MSB | V_LSB;
 
-    Meas_V_conv = 23.6 * Meas_V/65535;
+    Meas_V_conv = 23.6 * Meas_V / 65535;
 
     Wire.beginTransmission(ind);
     Wire.write(0x01); //Indirizzo del Control Register
     Wire.write(0x3C); //Valore del Control Register da scrivere per far rimetter configurazione default (ADC sleep)
-    Wire.endTransmission();
+        Wire.endTransmission();
+
+    return Meas_V_conv;
 
 }

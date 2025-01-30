@@ -15,3 +15,56 @@ std::vector<uint16_t> compressDataLZW(const uint16_t *data, size_t length) {
     }
     return output;
 }
+
+std::vector<int> LZW_compress(const std::vector<float>& inputData) {
+    // Dizionario iniziale
+    std::map<std::string, int> dictionary;
+    for (int i = 0; i < 256; i++) {
+        dictionary[std::string(1, i)] = i; // Aggiungi tutti i singoli caratteri
+    }
+
+    std::string currentString = "";
+    std::vector<int> compressedData;
+    int dictSize = 256;
+
+    for (float value : inputData) {
+        // Converte il valore in stringa
+        std::string nextString = currentString + String(value, 2).c_str();
+
+        if (dictionary.find(nextString) != dictionary.end()) {
+            currentString = nextString;
+        }
+        else {
+            compressedData.push_back(dictionary[currentString]);
+
+            // Aggiungi la nuova stringa al dizionario
+            if (dictSize < DICT_MAX_SIZE) {
+                dictionary[nextString] = dictSize++;
+            }
+
+            currentString = String(value, 2).c_str();  // Ripristina il carattere corrente
+        }
+    }
+
+    // Output finale
+    if (!currentString.empty()) {
+        compressedData.push_back(dictionary[currentString]);
+    }
+
+    return compressedData;
+}
+
+void compressAndSendData(float* sensorData, int numSensors) {
+    // Prepara i dati in formato vettore
+    std::vector<float> inputData(sensorData, sensorData + numSensors);
+
+    // Comprimi i dati
+    std::vector<int> compressedData = LZW_compress(inputData);
+
+    // Trasmissione dei dati compressi via Bluetooth (esempio)
+    for (int code : compressedData) {
+        Serial.print(code);
+        Serial.print(" ");
+    }
+    Serial.println();
+}

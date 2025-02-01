@@ -97,7 +97,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 
 	uint32_t currentTimestamp = millis(); // Timestamp attuale
 
-    int sensorsPerMux = NUM_SENSORS / 4; // Numero di sensori per MUX
+    int sensorsPerMux = 15; // Numero di sensori per MUX
 	// Per ogni MUX
     for (int mux = 0; mux < 4; mux++) {
 		// Per ogni canale del MUX
@@ -110,16 +110,16 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
             selectSensorMux(mux, channel, enPins, addPins);
 
             //Seleziona il pin ADC da usare
-            int ADC_PIN = selectADCpin(channel, adcPins);
+            int ADC_PIN = selectADCpin(sensorIndex, adcPins);
 
             // Legge il valore del sensore dall'ADC
             int sensorValue = analogRead(ADC_PIN);
 
 			// Converte il valore dell'ADC in un'unità di misura specifica
-            sensorData[sensorIndex] = convertADCValue(sensorValue);
+            sensorData[sensorIndex] = sensorValue; // convertADCValue(sensorValue);
 
 			// Controlla che i valori siano accettabili
-            checkErrorRange(sensorData[sensorIndex], sensorIndex);
+            // checkErrorRange(sensorData[sensorIndex], sensorIndex);
 
         }
     }

@@ -42,7 +42,7 @@ const int sclPin = 12;
 
 void setup() {
 
-	//Serial.begin(115200); // Inizializza la comunicazione seriale
+	Serial.begin(115200); // Inizializza la comunicazione seriale
 
     pinMode(led, OUTPUT);
     digitalWrite(led, HIGH);

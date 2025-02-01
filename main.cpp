@@ -42,6 +42,8 @@ const int sclPin = 12;
 
 void setup() {
 
+	//Serial.begin(115200); // Inizializza la comunicazione seriale
+
     pinMode(led, OUTPUT);
     digitalWrite(led, HIGH);
     delay(1000);
@@ -87,6 +89,13 @@ void loop() {
     // 1. Acquisizione dati
     currentTimestamp = millis(); // Timestamp attuale
     acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
+    //for (int i = 0; i < 59; i++) {
+    //    Serial.print(valoriSensori[i], 3); // Stampa con 3 decimali
+    //    if (i < 58) {
+    //        Serial.print(", ");  // Aggiunge una virgola dopo ogni valore tranne l'ultimo
+    //    }
+    //}
+    //Serial.println(); // Va a capo alla fine della stampa
     V_bat = I2C_battery_level();  //Acquisizione livello batteria
 
     /*

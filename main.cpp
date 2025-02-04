@@ -8,7 +8,7 @@
 // per compressione LZW
 #include <map>
 #include <vector>
-#include <string>
+#include <string> 
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
@@ -31,6 +31,8 @@ const int adcvalue = 12.0;   // risoluzione dell'ADC
 int id, id_r; //id dispositivo
 float V_bat; //Tensione batteria
 float valoriSensori[59];
+float valoriSensori_zero[59];
+//float valoriSensori_norm[59];
 uint32_t currentTimestamp;
 
 // Dichiarazione dei PIN
@@ -42,7 +44,7 @@ const int sclPin = 12;
 
 void setup() {
 
-	Serial.begin(115200); // Inizializza la comunicazione seriale
+	// Serial.begin(115200); // Inizializza la comunicazione seriale
 
     pinMode(led, OUTPUT);
     digitalWrite(led, HIGH);
@@ -66,6 +68,8 @@ void setup() {
         pinMode(ADCPINs[i], INPUT);
     }
 
+    //acquireData(valoriSensori_zero, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
+
     //Configura i PIN per I2C 
     Wire.begin(sdaPin, sclPin);
 
@@ -84,11 +88,14 @@ void setup() {
     
 }
 
-// Loop principale del firmware
+// Loop principale del firmware+
 void loop() {
     // 1. Acquisizione dati
     currentTimestamp = millis(); // Timestamp attuale
     acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
+  //  for (int i = 0; i < 59; i++) {
+		//valoriSensori_norm[i] = valoriSensori[i] - valoriSensori_zero[i]; // Normalizzazione dati
+  //  }
     //for (int i = 0; i < 59; i++) {
     //    Serial.print(valoriSensori[i], 3); // Stampa con 3 decimali
     //    if (i < 58) {

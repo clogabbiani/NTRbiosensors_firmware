@@ -20,12 +20,12 @@ This project handles sensor data acquisition, processing, and BLE transmission f
 ### Setup
 1. Clona il repository:
    ```bash
-   git clone https://github.com/tuo-utente/tuo-repository.git
-Opzionale: creare un branch in cui inserire modifiche 
-   ```bash
-   git checkout -b feature-nuovo-codice
-2. Aggiorna main con ultime modifiche su Git
-   ```bash
+    git clone https://github.com/tuo-utente/tuo-repository.git 
+Opzionale: creare un branch in cui inserire modifiche
+    ```bash
+    ```git checkout -b feature-nuovo-codice
+2. Aggiorna main con ultime modifiche su Git:
+      ```bash
    git pull origin main 
 3. Modifica i file
    ```bash

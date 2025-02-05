@@ -21,10 +21,19 @@ This project handles sensor data acquisition, processing, and BLE transmission f
 1. Clona il repository:
    ```bash
    git clone https://github.com/tuo-utente/tuo-repository.git
-
-# GIT methodology (when using only the main, no branches)
-      1. git pull origin main 
-      2. Modifica i file
-      3. git add . 
-      4. git commit -m "Descrizione"
-      5. git push origin main
+Opzionale: creare un branch in cui inserire modifiche 
+   ```bash
+   git checkout -b feature-nuovo-codice
+2. Aggiorna main con ultime modifiche su Git
+   ```bash
+   git pull origin main 
+3. Modifica i file
+   ```bash
+   git add .
+4. Crea un commit parlante delle modifiche 
+   ```bash
+   git commit -m "Descrizione"
+5. Pusha le modifiche al branch usato (main)
+   ```bash
+   git push origin main
+6. Opzionale: se lavoriamo su branch diversi, dopo i push bisogna creare una pull request per fare il merge con il main

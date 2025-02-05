@@ -42,3 +42,11 @@
 *.sqlite
 *.sqlite-journal
 
+# File di Visual Studio da ignorare
+.vs/
+*.suo
+*.user
+*.ipch
+*.VC.db
+*.vcxproj.user
+

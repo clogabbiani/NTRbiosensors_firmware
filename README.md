@@ -22,13 +22,9 @@ This project handles sensor data acquisition, processing, and BLE transmission f
    ```bash
    git clone https://github.com/tuo-utente/tuo-repository.git
 
-# Branch naming conventions
- - "main" is the main approved code, production
- - "develop" is the staging branch
- - "feature-featurename" for new functionalities
- - "bugfix-bugname" for corrections
-
-# GIT methodology
- - before starting: always execute a pull to the main branch to update the local branch
- - during work: execute frequent commit with clear messages
- - at the end: execute a push of the local branch to the main, creating a Pull Request
+# GIT methodology (when using only the main, no branches)
+      1. git pull origin main 
+      2. Modifica i file
+      3. git add . 
+      4. git commit -m "Descrizione"
+      5. git push origin main

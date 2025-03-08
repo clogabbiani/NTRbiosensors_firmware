@@ -1,4 +1,59 @@
-#include <main.cpp>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
+#define bleServerName "ESP32_NTR"
+#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define timeCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
+
+BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+
+void setupBLE() {
+    BLEDevice::init(bleServerName);
+    BLEServer* pServer = BLEDevice::createServer();
+    BLEService* pService = pServer->createService(SERVICE_UUID);
+    pService->addCharacteristic(&timeCharacteristic);
+    pService->addCharacteristic(&sensorCharacteristic);
+    pService->start();
+    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->setScanResponse(true);
+    BLEDevice::startAdvertising();
+}
+
+void transmitTimeData(uint32_t t) {
+    timeCharacteristic.setValue(t);
+    timeCharacteristic.notify();
+}
+
+void transmitSensorData(float sens) {
+    uint8_t array[4] = {};
+    array[0] = ((uint8_t*)&sens)[0];
+    array[1] = ((uint8_t*)&sens)[1];
+    array[2] = ((uint8_t*)&sens)[2];
+    array[3] = ((uint8_t*)&sens)[3];
+    sensorCharacteristic.setValue(array, 4);
+    sensorCharacteristic.notify();
+}
+
+void transmitDataPacket(uint32_t t, float sens) {
+    transmitTimeData(t);
+    transmitSensorData(sens);
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
 
 // packets organization
 struct DataPacket {
@@ -68,6 +123,9 @@ void sendDataOverBLE(uint16_t* sensorData, int sensorCount) {
         // logica di invio dati...
     }
 }
+
+
+*/
 
 
 

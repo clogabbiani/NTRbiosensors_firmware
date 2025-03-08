@@ -3,12 +3,12 @@
 #include <Wire.h>   //Libreria per I2C
 #include "Acquisition.h" // Modulo per l'acquisizione dei dati
 #include "BatteryManagement.h"
+#include "BLETransmission.h" // Modulo per la trasmissione dati tramite BLE
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
 #include "Alarm.h" // Modulo per il rilevamento dell'allarme
 #include "Compression.h" // Modulo per la compressione dei dati tramite LZW
-#include "BLETransmission.h" // Modulo per la trasmissione dati tramite BLE
 */
 
 #define EEPROM_SIZE 1
@@ -20,7 +20,7 @@ uint32_t tempoUltimaTrasmissione = 0;
 const uint32_t intervalloTrasmissione = 3600000; // 60 minuti in millisecondi
 int id, id_r; //id dispositivo
 float V_bat; //Tensione batteria
-float valoriSensori[59];
+float valoriSensori[64];
 uint32_t currentTimestamp;
 
 // Dichiarazione dei PIN
@@ -66,6 +66,9 @@ void setup() {
     pinMode(CLEARBAT, OUTPUT);
     clearBattery(CLEARBAT);
 
+    //Inizializza BLE
+    setupBLE();
+
     //Configura EEPROM e acquisisce/registra id device
     /*EEPROM.begin(EEPROM_SIZE);
     id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
@@ -102,14 +105,11 @@ void loop() {
     // 4. Compressione Dati
     CompressedData pacchettoCompresso;
     compressDataLZW(valoriFiltrati, pacchettoCompresso);
+    */
 
     // 5. Trasmissione dati periodica
-    if (millis() - tempoUltimaTrasmissione >= intervalloTrasmissione) {
-        transmitData(pacchettoCompresso);  // Trasmette i dati compressi via BLE
-        tempoUltimaTrasmissione = millis(); // Aggiorna l'ultimo timestamp di trasmissione
-    }
+    transmitDataPacket(currentTimestamp, valoriSensori[0]);  // Trasmette i dati compressi via BLE
 
-    */
 
     digitalWrite(led, LOW);
     delay(1000); // Attendere un po' prima del prossimo ciclo

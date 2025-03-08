@@ -2,6 +2,7 @@
 #include <EEPROM.h> //Libreria per scrivere/leggere su memoria FLASH
 #include <Wire.h>   //Libreria per I2C
 #include "Acquisition.h" // Modulo per l'acquisizione dei dati
+#include "BatteryManagement.h"
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
@@ -79,7 +80,7 @@ void setup() {
     }
     else {
         id = id_r;
-    }/*
+    }*/
 
     
 }

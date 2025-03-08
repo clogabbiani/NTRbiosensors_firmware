@@ -130,7 +130,8 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 
 
 
-//              ----  I2C ----
+/*
+//             ----I2C----
 // 
 // Funzione per la scansione I2C
 byte I2C_scanner() {
@@ -191,3 +192,5 @@ float I2C_battery_level() {
     return Meas_V_conv;
 
 }
+
+*/

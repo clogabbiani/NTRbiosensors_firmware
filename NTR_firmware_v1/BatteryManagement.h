@@ -31,7 +31,8 @@ float I2C_battery_level() {
     uint16_t V_MSB, V_LSB, Meas_V;
     float Meas_V_conv;
     byte ind;
-    ind = I2C_scanner();
+    //ind = I2C_scanner();
+    ind = 0x64;
 
     Wire.beginTransmission(ind);
     Wire.write(0x01); //Indirizzo del Control Register

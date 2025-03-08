@@ -8,17 +8,6 @@
 #define minThreshold 0.1
 #define maxThreshold 80
 #define conversionFactor 1.0 // Fattore di conversione per i valori dell'ADC
-#define BATCH_SIZE 100  // Numero di righe per batch
-
-// Struttura per i dati del sensore
-struct SensorData {
-    uint32_t timestamp;       // Timestamp in millisecondi
-    float values[NUM_SENSORS]; // Valori acquisiti dai sensori
-};
-
-// aggiunta di un buffer per i dati
-SensorData dataBuffer[BATCH_SIZE];
-int bufferIndex = 0;
 
 // Funzione per selezionare il MUX e il canale
 void selectSensorMux(int muxIndex, int channel, const int* enPins, const int* addPins) {
@@ -68,27 +57,6 @@ void checkErrorRange(uint16_t value, int sensorIndex) {
 		// Gestisci errore
 		// Serial.print("Errore: valore fuori range per sensore ");
 		// Serial.println(sensorIndex);
-    }
-}
-
-void compressAndSendData() {
-    // Placeholder per la compressione e l'invio dei dati
-    // Puoi aggiungere qui la logica per comprimere i dati e inviarli
-    // Serial.println("Compressing and sending data...");
-}
-
-// Funzione per comprimere e inviare i dati
-void addDataToBuffer(uint32_t timestamp, float* values) {
-    if (bufferIndex < BATCH_SIZE) {
-        dataBuffer[bufferIndex].timestamp = timestamp;
-		// Copia i valori nel buffer
-        memcpy(dataBuffer[bufferIndex].values, values, sizeof(float) * NUM_SENSORS);
-        bufferIndex++;
-    }
-    else {
-        // Gestisci il caso in cui il buffer è pieno
-        compressAndSendData();
-        bufferIndex = 0;
     }
 }
 

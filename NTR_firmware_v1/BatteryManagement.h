@@ -1,8 +1,13 @@
 #include <Wire.h>
 
 
-//              ----  I2C ----
-// 
+void clearBattery(int clearbat) {   //restart MAX835
+    digitalWrite(clearbat, LOW);
+    digitalWrite(clearbat, HIGH);
+    digitalWrite(clearbat, LOW);
+}
+
+
 // Funzione per la scansione I2C
 byte I2C_scanner() {
     byte error, address, address_return;

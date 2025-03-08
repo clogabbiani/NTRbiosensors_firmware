@@ -13,8 +13,6 @@
 
 #define EEPROM_SIZE 1
 #define led 16 
-#define DICT_MAX_SIZE 4096  // Limite per il dizionario (12-bit)
-#define CLEARBAT 7
 
 // Variabili globali
 const uint16_t sogliaAllarme = 30000; // Soglia per l'allarme (in grammi, quindi 30 kg)
@@ -31,12 +29,9 @@ const int addressPins[4] = { 45, 47, 9, 21 }; // PIN di Indirizzo per il canale 
 const int ADCPINs[4] = { 1, 2, 5, 4 };  // PIN di ADC
 const int sdaPin = 11;
 const int sclPin = 12;
+const int CLEARBAT = 7;
 
-void clearBattery() {   //restart MAX835
-    digitalWrite(CLEARBAT, LOW);
-    digitalWrite(CLEARBAT, HIGH);
-    digitalWrite(CLEARBAT, LOW);
-}
+
 
 void setup() {
 
@@ -67,8 +62,9 @@ void setup() {
     //Configura i PIN per I2C 
     Wire.begin(sdaPin, sclPin);
 
+    //Configura il pin CLEARBAT
     pinMode(CLEARBAT, OUTPUT);
-    clearBattery();
+    clearBattery(CLEARBAT);
 
     //Configura EEPROM e acquisisce/registra id device
     /*EEPROM.begin(EEPROM_SIZE);

@@ -1,3 +1,7 @@
+#include <map>
+#include <vector>
+#include <string>
+
 // data compression using LZW
 std::vector<uint16_t> compressDataLZW(const uint16_t *data, size_t length) {
     std::unordered_map<std::vector<uint16_t>, uint16_t> dictionary;

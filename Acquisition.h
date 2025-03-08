@@ -1,6 +1,4 @@
 // Data acquisition
-#include <Arduino.h>
-#include <Wire.h>
 
 #define NUM_SENSORS 59
 #define MUX_COUNT 4
@@ -26,7 +24,7 @@ void selectSensorMux(int muxIndex, int channel, const int* enPins, const int* ad
         digitalWrite(addPins[i], (channel >> i) & 1);
     }
 
-    delayMicroseconds(100); // Tempo di stabilizzazione del segnale
+    delayMicroseconds(1000); // Tempo di stabilizzazione del segnale
 }
 
 // Funzione per selezionare il pin ADC in base al canale
@@ -36,9 +34,9 @@ int selectADCpin(int channel, const int* adcPins) {
             return adcPins[0];
         case 16 ... 31:
             return adcPins[1];
-        case 32 ... 46:
+        case 32 ... 47:
             return adcPins[2];
-        case 47 ... 59:
+        case 48 ... 63:
             return adcPins[3];
         break;
     }
@@ -48,7 +46,7 @@ int selectADCpin(int channel, const int* adcPins) {
 float convertADCValue(int adcValue) {
     float voltage = (adcValue / 4095.0) * 3.3;  // Converti a tensione, ad esempio
 	// Conversione in kg o altro in base a calibrazione (conversionFactor)
-    return static_cast<float>(voltage * conversionFactor);
+    return voltage;
 }
 
 // funzione di supporto: controllare che i valori siano accettabili
@@ -65,7 +63,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 
 	uint32_t currentTimestamp = millis(); // Timestamp attuale
 
-    int sensorsPerMux = 15; // Numero di sensori per MUX
+    int sensorsPerMux = 16; // Numero di sensori per MUX
 	// Per ogni MUX
     for (int mux = 0; mux < 4; mux++) {
 		// Per ogni canale del MUX
@@ -84,7 +82,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
             int sensorValue = analogRead(ADC_PIN);
 
 			// Converte il valore dell'ADC in un'unità di misura specifica
-            sensorData[sensorIndex] = sensorValue; // convertADCValue(sensorValue);
+            sensorData[sensorIndex] = convertADCValue(sensorValue);
 
 			// Controlla che i valori siano accettabili
             // checkErrorRange(sensorData[sensorIndex], sensorIndex);
@@ -92,6 +90,4 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
         }
     }
 
-    // Aggiungi dati al buffer
-    addDataToBuffer(currentTimestamp, sensorData);
 }

@@ -114,6 +114,6 @@ void loop() {
     digitalWrite(led, LOW);
     delay(1000); // Attendere un po' prima del prossimo ciclo
     digitalWrite(led, HIGH);
-    delay(1000);
+    delay(200);
 }
 

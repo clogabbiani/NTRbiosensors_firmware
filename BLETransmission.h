@@ -13,6 +13,7 @@ BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteris
 void setupBLE() {
     BLEDevice::init(bleServerName);
     BLEServer* pServer = BLEDevice::createServer();
+    pServer->getPeerMTU(517);
     BLEService* pService = pServer->createService(SERVICE_UUID);
     pService->addCharacteristic(&timeCharacteristic);
     pService->addCharacteristic(&sensorCharacteristic);
@@ -28,17 +29,32 @@ void transmitTimeData(uint32_t t) {
     timeCharacteristic.notify();
 }
 
-void transmitSensorData(float sens) {
-    uint8_t array[4] = {};
-    array[0] = ((uint8_t*)&sens)[0];
-    array[1] = ((uint8_t*)&sens)[1];
-    array[2] = ((uint8_t*)&sens)[2];
-    array[3] = ((uint8_t*)&sens)[3];
-    sensorCharacteristic.setValue(array, 4);
+void transmitSensorData(float* sens) {
+    uint8_t array_256[256] = {};
+    uint8_t array_4[4] = {};
+
+    float val_s;
+
+    for (int i = 0; i < 64; i++) {
+
+        val_s = sens[i];
+
+        array_4[0] = ((uint8_t*)&val_s)[0];
+        array_4[1] = ((uint8_t*)&val_s)[1];
+        array_4[2] = ((uint8_t*)&val_s)[2];
+        array_4[3] = ((uint8_t*)&val_s)[3];
+
+        array_256[4 * i] = array_4[0];
+        array_256[4 * i + 1] = array_4[1];
+        array_256[4 * i + 2] = array_4[2];
+        array_256[4 * i + 3] = array_4[3];
+    }
+
+    sensorCharacteristic.setValue(array_256, 256);
     sensorCharacteristic.notify();
 }
 
-void transmitDataPacket(uint32_t t, float sens) {
+void transmitDataPacket(uint32_t t, float* sens) {
     transmitTimeData(t);
     transmitSensorData(sens);
 }

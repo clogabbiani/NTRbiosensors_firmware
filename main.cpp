@@ -108,7 +108,7 @@ void loop() {
     */
 
     // 5. Trasmissione dati periodica
-    transmitDataPacket(currentTimestamp, valoriSensori[0]);  // Trasmette i dati compressi via BLE
+    transmitDataPacket(currentTimestamp, valoriSensori);  // Trasmette i dati compressi via BLE
 
 
     digitalWrite(led, LOW);

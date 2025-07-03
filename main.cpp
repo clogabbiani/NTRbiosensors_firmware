@@ -22,6 +22,9 @@ int id, id_r; //id dispositivo
 float V_bat; //Tensione batteria
 float valoriSensori[64];
 uint32_t currentTimestamp;
+int BLE_dataReady=0;
+TaskHandle_t Task1;
+TaskHandle_t Task2;
 
 // Dichiarazione dei PIN
 const int enablePins[4] = { 10, 48, 14, 13 };   // PIN di Enable per i MUX (attivo basso) 
@@ -31,7 +34,47 @@ const int sdaPin = 11;
 const int sclPin = 12;
 const int CLEARBAT = 7;
 
+void Task1code(void* pvParam) {
+    for (;;) {
+        BLE_dataReady = 0;
 
+        // 1. Acquisizione dati
+        currentTimestamp = millis(); // Timestamp attuale
+        acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
+        V_bat = I2C_battery_level();  //Acquisizione livello batteria
+
+        /*
+        // 2. Raccolta e Filtraggio dati
+        uint16_t valoriFiltrati[59];
+        filterData(valoriSensori, valoriFiltrati);
+
+        // 3. Rilevazione Allarme
+        bool allarmeAttivo = checkThreshold(valoriFiltrati, sogliaAllarme);
+        if (allarmeAttivo) {
+            transmitAlarm();  // Invia un segnale di allarme immediato tramite BLE
+        }
+
+        // 4. Compressione Dati
+        CompressedData pacchettoCompresso;
+        compressDataLZW(valoriFiltrati, pacchettoCompresso);
+        */
+
+        // 5. Trasmissione dati periodica
+        // Vedi TaskCore_BLE
+
+        BLE_dataReady = 1;
+        delay(10);
+    }
+}
+
+void Task2code(void* pvParam) {
+    for (;;) {
+        if (BLE_dataReady == 1) {
+            transmitDataPacket(currentTimestamp, valoriSensori);  // Trasmette i dati compressi via BLE
+        }
+    }
+    delay(10);
+}
 
 void setup() {
 
@@ -69,6 +112,10 @@ void setup() {
     //Inizializza BLE
     setupBLE();
 
+    //Crea task per multicore
+    xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
+    xTaskCreatePinnedToCore(Task2code, "Task2", 40000, NULL, 1, &Task2, 1);
+
     //Configura EEPROM e acquisisce/registra id device
     /*EEPROM.begin(EEPROM_SIZE);
     id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
@@ -84,36 +131,12 @@ void setup() {
     
 }
 
-// Loop principale del firmware+
+
+
+// Loop principale del firmware
 void loop() {
-    // 1. Acquisizione dati
-    currentTimestamp = millis(); // Timestamp attuale
-    acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
-    V_bat = I2C_battery_level();  //Acquisizione livello batteria
 
-    /*
-    // 2. Raccolta e Filtraggio dati
-    uint16_t valoriFiltrati[59];
-    filterData(valoriSensori, valoriFiltrati);
-
-    // 3. Rilevazione Allarme
-    bool allarmeAttivo = checkThreshold(valoriFiltrati, sogliaAllarme);
-    if (allarmeAttivo) {
-        transmitAlarm();  // Invia un segnale di allarme immediato tramite BLE
-    }
-
-    // 4. Compressione Dati
-    CompressedData pacchettoCompresso;
-    compressDataLZW(valoriFiltrati, pacchettoCompresso);
-    */
-
-    // 5. Trasmissione dati periodica
-    transmitDataPacket(currentTimestamp, valoriSensori);  // Trasmette i dati compressi via BLE
-
-
-    digitalWrite(led, LOW);
-    delay(1000); // Attendere un po' prima del prossimo ciclo
-    digitalWrite(led, HIGH);
-    delay(200);
 }
+
+
 

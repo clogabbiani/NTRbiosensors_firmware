@@ -46,7 +46,7 @@ void Task1code(void* pvParam) {
         currentTimestamp = millis(); // Timestamp attuale
         acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
         V_bat = I2C_battery_level();  //Acquisizione livello batteria
-        acquireIMUdata(IMUdata);
+        //acquireIMUdata(IMUdata);
 
         /*
         // 2. Raccolta e Filtraggio dati
@@ -75,7 +75,7 @@ void Task1code(void* pvParam) {
 void Task2code(void* pvParam) {
     for (;;) {
         if (BLE_dataReady == 1) {
-            transmitDataPacket(currentTimestamp, valoriSensori);  // Trasmette i dati compressi via BLE
+            transmitDataPacket(currentTimestamp, valoriSensori, IMUdata);  // Trasmette i dati compressi via BLE
         }
     }
     delay(10);
@@ -140,8 +140,6 @@ void setup() {
 
     
 }
-
-
 
 // Loop principale del firmware
 void loop() {

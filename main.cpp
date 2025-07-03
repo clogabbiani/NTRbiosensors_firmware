@@ -2,8 +2,9 @@
 #include <EEPROM.h> //Libreria per scrivere/leggere su memoria FLASH
 #include <Wire.h>   //Libreria per I2C
 #include "Acquisition.h" // Modulo per l'acquisizione dei dati
-#include "BatteryManagement.h"
+#include "BatteryManagement.h"  //Modulo per la gestione batteria
 #include "BLETransmission.h" // Modulo per la trasmissione dati tramite BLE
+#include "IMU.h"    //Modulo per la gestione dati IMU
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
@@ -20,7 +21,8 @@ uint32_t tempoUltimaTrasmissione = 0;
 const uint32_t intervalloTrasmissione = 3600000; // 60 minuti in millisecondi
 int id, id_r; //id dispositivo
 float V_bat; //Tensione batteria
-float valoriSensori[64];
+float valoriSensori[64];    //Valori sensori FSR
+float IMUdata[6];   //Dati accelerometro e giroscopio
 uint32_t currentTimestamp;
 int BLE_dataReady=0;
 TaskHandle_t Task1;
@@ -33,6 +35,8 @@ const int ADCPINs[4] = { 1, 2, 5, 4 };  // PIN di ADC
 const int sdaPin = 11;
 const int sclPin = 12;
 const int CLEARBAT = 7;
+const int CSpin = 36;    //Chip Select pin per IMU
+const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
 
 void Task1code(void* pvParam) {
     for (;;) {
@@ -42,6 +46,7 @@ void Task1code(void* pvParam) {
         currentTimestamp = millis(); // Timestamp attuale
         acquireData(valoriSensori, enablePins, addressPins, ADCPINs); // Richiama la funzione di acquisizione dati
         V_bat = I2C_battery_level();  //Acquisizione livello batteria
+        acquireIMUdata(IMUdata);
 
         /*
         // 2. Raccolta e Filtraggio dati
@@ -108,6 +113,11 @@ void setup() {
     //Configura il pin CLEARBAT
     pinMode(CLEARBAT, OUTPUT);
     clearBattery(CLEARBAT);
+
+    //Configura i pin per IMU e inizializza
+    digitalWrite(SA0pin, LOW);  //Con pin SA0 = 0, l'indirizzo è 6Ah (106d)
+    digitalWrite(CSpin, HIGH);
+    setupIMU();
 
     //Inizializza BLE
     setupBLE();

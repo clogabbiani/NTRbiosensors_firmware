@@ -101,6 +101,7 @@
     <ClInclude Include="..\Compression.h" />
     <ClInclude Include="..\DataCollection.h" />
     <ClInclude Include="..\ErrorHandling.h" />
+    <ClInclude Include="..\IMU.h" />
     <ClInclude Include="__vm\.NTR_firmware_v1.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>

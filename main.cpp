@@ -12,8 +12,9 @@
 #include "Compression.h" // Modulo per la compressione dei dati tramite LZW
 */
 
-#define EEPROM_SIZE 1
-#define led 16 
+#define EEPROM_SIZE 10
+#define led_r 16
+#define led_b 15
 
 // Variabili globali
 const uint16_t sogliaAllarme = 30000; // Soglia per l'allarme (in grammi, quindi 30 kg)
@@ -27,6 +28,9 @@ uint32_t currentTimestamp;
 int BLE_dataReady=0;
 TaskHandle_t Task1;
 TaskHandle_t Task2;
+
+float paramA[59], paramB[59], paramC[59], paramD[59];
+
 
 // Dichiarazione dei PIN
 const int enablePins[4] = { 10, 48, 14, 13 };   // PIN di Enable per i MUX (attivo basso) 
@@ -85,11 +89,6 @@ void setup() {
 
 	// Serial.begin(115200); // Inizializza la comunicazione seriale
 
-    pinMode(led, OUTPUT);
-    digitalWrite(led, HIGH);
-    delay(1000);
-    digitalWrite(led, LOW);
-
     // Configura i PIN di Enable come OUTPUT e li spegne
     for (int i = 0; i < 4; i++) {
         pinMode(enablePins[i], OUTPUT);
@@ -126,17 +125,32 @@ void setup() {
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
     xTaskCreatePinnedToCore(Task2code, "Task2", 40000, NULL, 1, &Task2, 1);
 
+    /*
     //Configura EEPROM e acquisisce/registra id device
-    /*EEPROM.begin(EEPROM_SIZE);
+    EEPROM.begin(EEPROM_SIZE);
     id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
-    if (id_r == 0) {
-        //Da inserire: Codice per acquisire un progressivo id tramite bluetooth
-        EEPROM.write(0, id); 
-        EEPROM.commit();
+    if (id_r == 55) {
+        //Carica primo set parametri
+        pinMode(led_r, OUTPUT);
+        digitalWrite(led_r, HIGH);
+        delay(1000);
+        digitalWrite(led_r, LOW);
     }
-    else {
-        id = id_r;
-    }*/
+    if (id_r == 56) {
+        //Carica secondo set parametri
+        pinMode(led_b, OUTPUT);
+        digitalWrite(led_b, HIGH);
+        delay(1000);
+        digitalWrite(led_b, LOW);
+    }
+    */
+
+    pinMode(led_r, OUTPUT);
+    digitalWrite(led_r, HIGH);
+    delay(1000);
+    digitalWrite(led_r, LOW);
+
+
 
     
 }

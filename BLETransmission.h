@@ -12,6 +12,9 @@ BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic:
 BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 
+BLEDescriptor timeDescriptor(BLEUUID((uint16_t)0x2902));
+BLEDescriptor sensorDescriptor(BLEUUID((uint16_t)0x2902));
+
 void setupBLE() {
     BLEDevice::init(bleServerName);
     BLEServer* pServer = BLEDevice::createServer();
@@ -20,11 +23,17 @@ void setupBLE() {
     pService->addCharacteristic(&timeCharacteristic);
     pService->addCharacteristic(&sensorCharacteristic);
     //pService->addCharacteristic(&imuCharacteristic);
+    timeCharacteristic.addDescriptor(&timeDescriptor);
+    sensorCharacteristic.addDescriptor(&sensorDescriptor);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(true);
     BLEDevice::startAdvertising();
+}
+
+void getCalibParam() {
+
 }
 
 void transmitTimeData(uint32_t t) {

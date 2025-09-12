@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="NTR_firmware_v1.ino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Acquisition.h" />
+    <ClInclude Include="..\Alarm.h" />
+    <ClInclude Include="..\BatteryManagement.h" />
+    <ClInclude Include="..\BLETransmission.h" />
+    <ClInclude Include="..\Compression.h" />
+    <ClInclude Include="..\DataCollection.h" />
+    <ClInclude Include="..\ErrorHandling.h" />
+    <ClInclude Include="..\IMU.h" />
+    <ClInclude Include="__vm\.NTR_firmware_v1.vsarduino.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\arduino folders read me.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="board.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{87ea868f-5b95-42d3-8df0-7abd3cbbc146}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api">
+      <UniqueIdentifier>{e821efed-7798-4c13-acd2-d62fe1df2a6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\_micro-api\libraries">
+      <UniqueIdentifier>{b746ce5d-f497-476e-80ea-0846121f4c06}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -5,6 +5,7 @@
 */
 
 // libraries included
+#include <Preferences.h>
 #include <BLEDevice.h>
 #include <EEPROM.h>
 #include <Wire.h>

@@ -5,6 +5,7 @@
 #include "BatteryManagement.h"  //Modulo per la gestione batteria
 #include "BLETransmission.h" // Modulo per la trasmissione dati tramite BLE
 #include "IMU.h"    //Modulo per la gestione dati IMU
+#include <Preferences.h>
 
 /*
 #include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
@@ -30,6 +31,8 @@ TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 float paramA[59], paramB[59], paramC[59], paramD[59];
+uint32_t SN_test = 2000;
+uint32_t param_test = 0;
 
 
 // Dichiarazione dei PIN
@@ -41,6 +44,8 @@ const int sclPin = 12;
 const int CLEARBAT = 7;
 const int CSpin = 36;    //Chip Select pin per IMU
 const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
+
+Preferences prefs;
 
 void Task1code(void* pvParam) {
     for (;;) {
@@ -87,7 +92,7 @@ void Task2code(void* pvParam) {
 
 void setup() {
 
-	// Serial.begin(115200); // Inizializza la comunicazione seriale
+	 Serial.begin(115200); // Inizializza la comunicazione seriale
 
     // Configura i PIN di Enable come OUTPUT e li spegne
     for (int i = 0; i < 4; i++) {
@@ -119,7 +124,14 @@ void setup() {
     setupIMU();
 
     //Inizializza BLE
-    setupBLE();
+    Serial.println("Starting BLE...");
+    setupBLE_Client();
+    while (param_test == 0) {
+        param_test = readBLE_initial(SN_test);
+    }
+    Serial.print("Test terminato, valore acquisito: ");
+    Serial.println(param_test);
+    setupBLE_Server();
 
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
@@ -128,7 +140,12 @@ void setup() {
     /*
     //Configura EEPROM e acquisisce/registra id device
     EEPROM.begin(EEPROM_SIZE);
-    id_r = EEPROM.read(0);    //legge area di memoria "0" che contiene id device
+    id_r = EEPROM.read(0);
+    */
+    //Configura partizione NVS
+    
+    prefs.begin("ID", false);    //legge area di memoria "0" che contiene id device
+    id_r = prefs.getInt("ID");
     if (id_r == 55) {
         //Carica primo set parametri
         pinMode(led_r, OUTPUT);
@@ -143,16 +160,13 @@ void setup() {
         delay(1000);
         digitalWrite(led_b, LOW);
     }
-    */
-
+    //prefs.end();
+    /*
     pinMode(led_r, OUTPUT);
     digitalWrite(led_r, HIGH);
     delay(1000);
     digitalWrite(led_r, LOW);
-
-
-
-    
+    */
 }
 
 // Loop principale del firmware

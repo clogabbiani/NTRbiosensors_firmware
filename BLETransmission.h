@@ -95,10 +95,9 @@ void transmitDataPacket(uint32_t t, float* sens, float *imu) {
 
 //Parte client iniziale
 
-
-#define bleServerName_client "ESP32_NTR"
+#define bleServerName_client "ESP32_NTR_client"
 static BLEUUID SERVICE_UUID_CLIENT("4fafc201-1fb5-459e-8fcc-c5c9c331915d");
-static BLEUUID snCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a8");
+static BLEUUID snCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a7");
 static BLEUUID paramCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a1");
 
 static boolean doConnect = false;
@@ -123,7 +122,6 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
     b = pBLERemoteCharacteristic->readFloat();
     Serial.println(b);
 }
-
 
 
 class MyClientCallback : public BLEClientCallbacks {
@@ -184,9 +182,9 @@ uint32_t connectToServer(uint32_t val_w) {
     connected = true;
 
     paramCharacteristic = pRemoteService->getCharacteristic(paramCHARACTERISTIC_UUID);
-    if (snCharacteristic == nullptr) {
+    if (paramCharacteristic == nullptr) {
         Serial.print("Failed to find our param characteristic UUID: ");
-        Serial.println(snCHARACTERISTIC_UUID.toString().c_str());
+        Serial.println(paramCHARACTERISTIC_UUID.toString().c_str());
     }
     Serial.println(" - Found our param characteristic");
     delay(1000);
@@ -194,7 +192,7 @@ uint32_t connectToServer(uint32_t val_w) {
 
     // Read the param value of the characteristic.
     if (paramCharacteristic->canRead()) {
-        param = snCharacteristic->readUInt32();
+        param = paramCharacteristic->readUInt32();
         Serial.print("The characteristic value was: ");
         Serial.println(param);
     }

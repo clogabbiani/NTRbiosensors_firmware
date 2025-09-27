@@ -1,39 +1,39 @@
 ﻿#include <Arduino.h>
-#include <EEPROM.h> //Libreria per scrivere/leggere su memoria FLASH
-#include <Wire.h>   //Libreria per I2C
-#include "Acquisition.h" // Modulo per l'acquisizione dei dati
+#include <EEPROM.h>             //Libreria per scrivere/leggere su memoria FLASH
+#include <Wire.h>               //Libreria per I2C
+#include "Acquisition.h"        //Modulo per l'acquisizione dei dati
 #include "BatteryManagement.h"  //Modulo per la gestione batteria
-#include "BLETransmission.h" // Modulo per la trasmissione dati tramite BLE
-#include "IMU.h"    //Modulo per la gestione dati IMU
-#include <Preferences.h>
+#include "BLETransmission.h"    //Modulo per la trasmissione dati tramite BLE
+#include "IMU.h"                //Modulo per la gestione dati IMU
+#include <Preferences.h>        //Libreria per NVS
 
-/*
-#include "DataCollection.h" // Modulo per la raccolta e il filtraggio dei dati
-#include "Alarm.h" // Modulo per il rilevamento dell'allarme
-#include "Compression.h" // Modulo per la compressione dei dati tramite LZW
-*/
-
-#define EEPROM_SIZE 10
 #define led_r 16
 #define led_b 15
 
 // Variabili globali
-const uint16_t sogliaAllarme = 30000; // Soglia per l'allarme (in grammi, quindi 30 kg)
-uint32_t tempoUltimaTrasmissione = 0;
-const uint32_t intervalloTrasmissione = 3600000; // 60 minuti in millisecondi
-int id, id_r; //id dispositivo
-float V_bat; //Tensione batteria
+float V_bat;                //Tensione batteria
 float valoriSensori[64];    //Valori sensori FSR
-float IMUdata[6];   //Dati accelerometro e giroscopio
-uint32_t currentTimestamp;
-int BLE_dataReady=0;
+float IMUdata[6];           //Dati accelerometro e giroscopio
+uint32_t currentTimestamp;  //Timestamp
+int BLE_dataReady=0;        //Segnale dato pronto per trasmettere valori sensori su BLE
+uint32_t SN = 2000;         //Serial Number
+float paramA[59], paramB[59], paramC[59], paramD[59];       //Parametri di calibrazione
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
-float paramA[59], paramB[59], paramC[59], paramD[59];
-uint32_t SN = 2000;
+// Dichiarazione dei PIN
+const int enablePins[4] = { 10, 48, 14, 13 };   // PIN di Enable per i MUX (attivo basso) 
+const int addressPins[4] = { 45, 47, 9, 21 }; // PIN di Indirizzo per il canale del MUX
+const int ADCPINs[4] = { 1, 2, 5, 4 };  // PIN di ADC
+const int sdaPin = 11;
+const int sclPin = 12;
+const int CLEARBAT = 7;
+const int CSpin = 36;    //Chip Select pin per IMU
+const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
+
 
 // --- NVS calibrazione ---
+//Funzioni per salvare e leggere i parametri di calibrazione in memoria NVS
 bool saveCalibToNVS(const float* A, const float* B, const float* C, const float* D) {
     Preferences pref;
     if (!pref.begin("calib", false)) return false;
@@ -57,18 +57,6 @@ bool loadCalibFromNVS(float* A, float* B, float* C, float* D) {
     pref.end();
     return ok;
 }
-
-
-// Dichiarazione dei PIN
-const int enablePins[4] = { 10, 48, 14, 13 };   // PIN di Enable per i MUX (attivo basso) 
-const int addressPins[4] = { 45, 47, 9, 21 }; // PIN di Indirizzo per il canale del MUX
-const int ADCPINs[4] = { 1, 2, 5, 4 };  // PIN di ADC
-const int sdaPin = 11;
-const int sclPin = 12;
-const int CLEARBAT = 7;
-const int CSpin = 36;    //Chip Select pin per IMU
-const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
-
 
 //Tasks principali
 void Task1code(void* pvParam) {

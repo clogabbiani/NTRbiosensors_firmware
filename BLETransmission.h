@@ -260,6 +260,7 @@ bool fetchCalibrationFromServer() {
     extern float paramA[59], paramB[59], paramC[59], paramD[59];
     for (int i = 0; i < 59; i++) {
         paramA[i] = A64[i]; paramB[i] = B64[i]; paramC[i] = C64[i]; paramD[i] = D64[i];
+        Serial.println(paramA[i]);
     }
 
     // 8. Disconnetti alla fine

@@ -9,7 +9,7 @@
 
 #define red_led 16
 #define blue_led 15
-#define led_green 6
+#define green_led 6
 #define buzzer 17
 
 // Variabili globali
@@ -201,30 +201,33 @@ void setup() {
     //Inizializza BLE
     Serial.println("Starting BLE...");
     setupBLE_Client();
-    loadSNFromNVS(SN);
+    /*loadSNFromNVS(SN);
     bool sn_test = false;
     while (sn_test != true) {
         sn_test = sendSN_BLE(SN);
     }
-    Serial.println("Serial Number inviato");
+    Serial.println("Serial Number inviato");*/
    
 
     // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
     setupBLE_Server();
 
-    //Recupera parametri di caibrazione (dal server BLE o da locale
+    //Recupera parametri di caibrazione (dal server BLE o da locale)
     handleCalibParam();
 
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
     xTaskCreatePinnedToCore(Task2code, "Task2", 40000, NULL, 1, &Task2, 1);
 
-    /*
-    pinMode(led_r, OUTPUT);
-    digitalWrite(led_r, HIGH);
-    delay(1000);
-    digitalWrite(led_r, LOW);
-    */
+    //LED verde lampeggia tre volte per indicare fine setup
+    digitalWrite(green_led, HIGH);
+    for (int i = 0; i < 2; i++) {
+        pinMode(green_led, OUTPUT);
+        digitalWrite(green_led, LOW);
+        delay(1000);
+        digitalWrite(green_led, HIGH);
+        delay(1000);
+    }
 }
 
 // Loop principale del firmware

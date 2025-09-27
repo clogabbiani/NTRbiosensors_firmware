@@ -125,20 +125,21 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 
             // Legge il valore del sensore dall'ADC
             int sensorValue = analogRead(ADC_PIN);
-            if (sensorIndex < 8) {
+            /*if (sensorIndex < 8) {
                 Serial.print("Debug first 8 sensors");
                 Serial.printf("Sensor[%d]: ADC=%d ", sensorIndex, sensorValue);
-            }
+            }*/
 
 			// Converte il valore dell'ADC in un'unità di misura specifica
-            //sensorData[sensorIndex] = convertADCValue(sensorValue);
-                        // debug per la conversione in kg
+            // debug per la conversione in kg
             float kgValue = convertADCValue(sensorValue, sensorIndex);
-            if (sensorIndex < 5 && kgValue != 0.0f) {
+            Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue,
+                (sensorValue / 4095.0f) * 3.3f, kgValue);
+            /*if (sensorIndex < 5 && kgValue != 0.0f) {
                 Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",
                     sensorIndex, sensorValue,
                     (sensorValue / 4095.0f) * 3.3f, kgValue);
-            }
+            }*/
             sensorData[sensorIndex] = kgValue;
 
 			// Controlla che i valori siano accettabili

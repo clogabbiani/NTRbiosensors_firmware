@@ -7,8 +7,10 @@
 #include "IMU.h"                //Modulo per la gestione dati IMU
 #include <Preferences.h>        //Libreria per NVS
 
-#define led_r 16
-#define led_b 15
+#define red_led 16
+#define blue_led 15
+#define led_green 6
+#define buzzer 17
 
 // Variabili globali
 float V_bat;                //Tensione batteria

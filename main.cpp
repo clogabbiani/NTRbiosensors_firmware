@@ -37,10 +37,14 @@ const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
 bool loadSNFromNVS(uint32_t serial_number) {
     Preferences pref;
     if (!pref.begin("sn", true)) return false;
-    bool ok = true;
-    ok &= pref.getUInt("SN", serial_number) == sizeof(uint32_t);
+    SN = pref.getUInt("SN", 0);
+    if (SN !=0) {
+        return true;
+    }
+    else {
+        return false;
+    }
     pref.end();
-    return ok;
 }
 
 //Funzione per salvare i parametri di calibrazione in memoria NVS
@@ -195,6 +199,7 @@ void setup() {
     //Inizializza BLE
     Serial.println("Starting BLE...");
     setupBLE_Client();
+    loadSNFromNVS(SN);
     bool sn_test = false;
     while (sn_test != true) {
         sn_test = sendSN_BLE(SN);

@@ -2,24 +2,6 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-#define bleServerName "ESP32_NTR_server"
-#define SERVICE_UUID_SERVER "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define timeCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
-#define imuCHARACTERISTIC_UUID "d7395388-f82f-4b88-8f31-db216ece04f3"
-
-// ---- CALIBRATION CHARACTERISTICS (server) ----
-static BLEUUID CALIB_META_UUID("6b8b0002-1b2b-3b4b-5b6b-7b8b9babcb01");
-static BLEUUID CALIB_A_UUID("6b8b0003-1b2b-3b4b-5b6b-7b8b9babcb01");
-static BLEUUID CALIB_B_UUID("6b8b0004-1b2b-3b4b-5b6b-7b8b9babcb01");
-static BLEUUID CALIB_C_UUID("6b8b0005-1b2b-3b4b-5b6b-7b8b9babcb01");
-static BLEUUID CALIB_D_UUID("6b8b0006-1b2b-3b4b-5b6b-7b8b9babcb01");
-
-// ---- SERVER ----
-BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
-BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
-BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
-
 // ---- helpers compatibili con le due versioni della BLE lib ----
 inline std::string toStdString(const std::string& s) {
     return s;                                   // già std::string
@@ -27,6 +9,18 @@ inline std::string toStdString(const std::string& s) {
 inline std::string toStdString(const String& s) {
     return std::string(s.c_str(), s.length());  // Arduino String -> std::string
 }
+
+// ---- SERVER  ----
+
+#define bleServerName "ESP32_NTR_server"
+#define SERVICE_UUID_SERVER "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define timeCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
+#define imuCHARACTERISTIC_UUID "d7395388-f82f-4b88-8f31-db216ece04f3"
+
+BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 
 void setupBLE_Server() {
     BLEDevice::init(bleServerName);
@@ -36,8 +30,6 @@ void setupBLE_Server() {
     pService->addCharacteristic(&timeCharacteristic);
     pService->addCharacteristic(&sensorCharacteristic);
     //pService->addCharacteristic(&imuCharacteristic);
-    //timeCharacteristic.addDescriptor(&timeDescriptor);
-    //sensorCharacteristic.addDescriptor(&sensorDescriptor);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID_SERVER);
@@ -106,13 +98,18 @@ void transmitDataPacket(uint32_t t, float* sens, float *imu) {
     //transmitImuData(imu);
 }
 
-//Parte client iniziale
-
+// ---- CLIENT ----
 #define bleServerName_client "ESP32_NTR_client"
 static BLEUUID SERVICE_UUID_CLIENT("4fafc201-1fb5-459e-8fcc-c5c9c331915d");
 static BLEUUID snCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a7");
 static BLEUUID paramCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a1");
 
+// ---- CALIBRATION CHARACTERISTICS ----
+static BLEUUID CALIB_META_UUID("6b8b0002-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_A_UUID("6b8b0003-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_B_UUID("6b8b0004-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_C_UUID("6b8b0005-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_D_UUID("6b8b0006-1b2b-3b4b-5b6b-7b8b9babcb01");
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -120,23 +117,6 @@ static boolean doScan = false;
 static BLERemoteCharacteristic* snCharacteristic;
 static BLERemoteCharacteristic* paramCharacteristic;
 static BLEAdvertisedDevice* myDevice;
-
-/*static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-    Serial.print("Notify callback for characteristic ");
-    Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
-    Serial.print(" of data length ");
-    Serial.println(length);
-    Serial.print("data: ");
-    Serial.println((char*)pData);
-}*/
-
-/*static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-    Serial.print("Notify callback for characteristic ");
-    float b;
-    b = pBLERemoteCharacteristic->readFloat();
-    Serial.println(b);
-}*/
-
 
 class MyClientCallback : public BLEClientCallbacks {
     void onConnect(BLEClient* pclient) {
@@ -254,7 +234,6 @@ void setupBLE_Client() {
     pBLEScan->setActiveScan(true);
     pBLEScan->start(30);
 }
-
 
 /*bool readBLE_initial(uint32_t v) {
     if (doConnect == true) {

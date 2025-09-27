@@ -102,7 +102,6 @@ void transmitDataPacket(uint32_t t, float* sens, float *imu) {
 #define bleServerName_client "ESP32_NTR_client"
 static BLEUUID SERVICE_UUID_CLIENT("4fafc201-1fb5-459e-8fcc-c5c9c331915d");
 static BLEUUID snCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a7");
-static BLEUUID paramCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a1");
 
 // ---- CALIBRATION CHARACTERISTICS ----
 static BLEUUID CALIB_META_UUID("6b8b0002-1b2b-3b4b-5b6b-7b8b9babcb01");
@@ -126,89 +125,6 @@ class MyClientCallback : public BLEClientCallbacks {
         Serial.println("onDisconnect");
     }
 };
-
-/*uint32_t connectToServer(uint32_t val_w) {
-    Serial.print("Forming a connection to ");
-    Serial.println(myDevice->getAddress().toString().c_str());
-    BLEClient* pClient = BLEDevice::createClient();
-    Serial.println(" - Created client");
-    pClient->setClientCallbacks(new MyClientCallback());
-    // Connect to the remove BLE Server.
-    pClient->connect(myDevice);
-    Serial.println(" - Connected to server");
-    // Obtain a reference to the service we are after in the remote BLE server.
-    BLERemoteService* pRemoteService = pClient->getService(SERVICE_UUID_CLIENT);
-    if (pRemoteService == nullptr) {
-        Serial.print("Failed to find our service UUID: ");
-        Serial.println(SERVICE_UUID_CLIENT.toString().c_str());
-        pClient->disconnect();
-        //return false;
-    }
-    Serial.println(" - Found our service");
-    // Obtain a reference to the characteristic in the service of the remote BLE server.
-    snCharacteristic = pRemoteService->getCharacteristic(snCHARACTERISTIC_UUID);
-    if (snCharacteristic == nullptr) {
-        Serial.print("Failed to find our characteristic UUID: ");
-        Serial.println(snCHARACTERISTIC_UUID.toString().c_str());
-        pClient->disconnect();
-        //return false;
-    }
-    Serial.println(" - Found our characteristic");
-
-    uint32_t value;
-
-    // Read the value of the characteristic.
-    if (snCharacteristic->canRead()) {
-        value = snCharacteristic->readUInt32();
-        Serial.print("The characteristic value was: ");
-        Serial.println(value);
-    }
-
-    uint32_t to_w;
-
-    if (snCharacteristic->canWrite()) {
-        to_w = val_w;
-        snCharacteristic->writeValue((String)to_w);
-        Serial.print("Scritto sulla caratteristica valore ");
-        Serial.println(to_w);
-    }
-
-    connected = true;
-    /*
-    paramCharacteristic = pRemoteService->getCharacteristic(paramCHARACTERISTIC_UUID);
-    if (paramCharacteristic == nullptr) {
-        Serial.print("Failed to find our param characteristic UUID: ");
-        Serial.println(paramCHARACTERISTIC_UUID.toString().c_str());
-    }
-    Serial.println(" - Found our param characteristic");
-    delay(1000);
-    */
-    /*
-    uint32_t param;
-
-    // Read the param value of the characteristic.
-    if (paramCharacteristic->canRead()) {
-        param = paramCharacteristic->readUInt32();
-        Serial.print("The characteristic value was: ");
-        Serial.println(param);
-    }
-    return param;
-
-    */
-   
-    //if (paramCharacteristic->canNotify()) {
-      //  paramCharacteristic->registerForNotify(notifyCallback);
-    //}
-
-    // Read the param value of the characteristic.
-    /*if (paramCharacteristic->canRead()) {
-        val_param_ar = paramCharacteristic->readRawData();
-        Serial.print("The characteristic value was: ");
-    }*
-    return(1);
-
-
-}*/
 
 // Scan for BLE servers and find the first one that advertises the service we are looking for.
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
@@ -234,19 +150,6 @@ void setupBLE_Client() {
     pBLEScan->setActiveScan(true);
     pBLEScan->start(30);
 }
-
-/*bool readBLE_initial(uint32_t v) {
-    if (doConnect == true) {
-        if (uint32_t p = connectToServer(v)) {
-            Serial.println("We are now connected to the BLE Server.");
-            return(true);
-        }
-        else {
-            Serial.println("We have failed to connect to the server; Restart your device to scan for nearby BLE server again.");
-        }
-        doConnect = false;
-    }
-}*/
 
 bool sendSN_BLE(uint32_t serial_num) {
     BLEClient* pClient = BLEDevice::createClient();

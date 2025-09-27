@@ -58,6 +58,52 @@ bool loadCalibFromNVS(float* A, float* B, float* C, float* D) {
     return ok;
 }
 
+void handleCalibParam() {
+    Serial.print("[BOOT] param: ");
+
+    // === Recupero parametri di calibrazione ===
+    bool calibOK = false;
+
+    // prova a fetchare dal server di calibrazione
+    calibOK = fetchCalibrationFromServer();
+    Serial.println(calibOK ? "[CAL] Parametri letti da BLE" : "[CAL] Lettura da BLE fallita");
+
+    // se BLE fallisce, prova da NVS
+    if (!calibOK) {
+        calibOK = loadCalibFromNVS(paramA, paramB, paramC, paramD);
+        Serial.println(calibOK ? "[CAL] Parametri caricati da NVS" : "[CAL] Nessun parametro valido in NVS");
+    }
+
+    // se arrivano da BLE, salvali in NVS per gli avvii successivi
+    if (calibOK) {
+        if (saveCalibToNVS(paramA, paramB, paramC, paramD)) {
+            Serial.println("[CAL] Parametri salvati in NVS");
+        }
+        else {
+            Serial.println("[CAL] Errore salvataggio NVS");
+        }
+        // stampa veloce di controllo
+        Serial.printf("[CAL] A[0]=%.6f B[0]=%.6f C[0]=%.6f D[0]=%.6f\n", paramA[0], paramB[0], paramC[0], paramD[0]);
+
+        // debug per vedere se i parametri di calibrazione sono ragionevoli
+        auto dbg = [](const char* name, float* v) {
+            int nz = 0; float mn = 1e9f, mx = -1e9f;
+            for (int i = 0; i < 59; i++) {
+                float x = v[i];
+                if (x != 0.0f)
+                    nz++;
+                if (x < mn)
+                    mn = x;
+                if (x > mx) mx = x;
+            }
+            Serial.printf("[CAL] %s: nz=%d  min=%.6f  max=%.6f  first=%.6f\n", name, nz, mn, mx, v[0]);
+        };
+        dbg("A", paramA); dbg("B", paramB); dbg("C", paramC); dbg("D", paramD);
+
+    }
+    // === Fine recupero parametri di calibrazione ===
+}
+
 //Tasks principali
 void Task1code(void* pvParam) {
     for (;;) {
@@ -145,54 +191,11 @@ void setup() {
     Serial.println("Serial Number inviato");
     */
 
-    Serial.print("[BOOT] param: ");
-
     // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
     setupBLE_Server();
 
-    // === Recupero parametri di calibrazione ===
-    bool calibOK = false;
-
-    // prova a fetchare dal server di calibrazione
-    calibOK = fetchCalibrationFromServer();
-    Serial.println(calibOK ? "[CAL] Parametri letti da BLE" : "[CAL] Lettura da BLE fallita");
-
-    // se BLE fallisce, prova da NVS
-    if (!calibOK) {
-        calibOK = loadCalibFromNVS(paramA, paramB, paramC, paramD);
-        Serial.println(calibOK ? "[CAL] Parametri caricati da NVS" : "[CAL] Nessun parametro valido in NVS");
-    }
-
-    // se arrivano da BLE, salvali in NVS per gli avvii successivi
-    if (calibOK) {
-        if (saveCalibToNVS(paramA, paramB, paramC, paramD)) {
-            Serial.println("[CAL] Parametri salvati in NVS");
-        }
-        else {
-            Serial.println("[CAL] Errore salvataggio NVS");
-        }
-        // stampa veloce di controllo
-        Serial.printf("[CAL] A[0]=%.6f B[0]=%.6f C[0]=%.6f D[0]=%.6f\n", paramA[0], paramB[0], paramC[0], paramD[0]);
-
-        // debug per vedere se i parametri di calibrazione sono ragionevoli
-        auto dbg = [](const char* name, float* v) {
-            int nz = 0; float mn = 1e9f, mx = -1e9f;
-            for (int i = 0; i < 59; i++) {
-                float x = v[i];
-                if (x != 0.0f)
-                    nz++;
-                if (x < mn)
-                    mn = x;
-                if (x > mx) mx = x;
-            }
-            Serial.printf("[CAL] %s: nz=%d  min=%.6f  max=%.6f  first=%.6f\n", name, nz, mn, mx, v[0]);
-        };
-        dbg("A", paramA); dbg("B", paramB); dbg("C", paramC); dbg("D", paramD);
-
-    }
-
-
-    // === Fine recupero parametri di calibrazione ===
+    //Recupera parametri di caibrazione (dal server BLE o da locale
+    handleCalibParam();
 
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);

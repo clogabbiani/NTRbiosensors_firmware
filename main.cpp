@@ -1,4 +1,4 @@
-#include <Arduino.h>
+﻿#include <Arduino.h>
 #include <EEPROM.h> //Libreria per scrivere/leggere su memoria FLASH
 #include <Wire.h>   //Libreria per I2C
 #include "Acquisition.h" // Modulo per l'acquisizione dei dati
@@ -31,8 +31,32 @@ TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 float paramA[59], paramB[59], paramC[59], paramD[59];
-uint32_t SN_test = 2000;
-uint32_t param_test = 0;
+uint32_t SN = 2000;
+
+// --- NVS calibrazione ---
+bool saveCalibToNVS(const float* A, const float* B, const float* C, const float* D) {
+    Preferences pref;
+    if (!pref.begin("calib", false)) return false;
+    bool ok = true;
+    ok &= pref.putBytes("A", A, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.putBytes("B", B, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.putBytes("C", C, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.putBytes("D", D, 59 * sizeof(float)) == 59 * sizeof(float);
+    pref.end();
+    return ok;
+}
+
+bool loadCalibFromNVS(float* A, float* B, float* C, float* D) {
+    Preferences pref;
+    if (!pref.begin("calib", true)) return false;
+    bool ok = true;
+    ok &= pref.getBytes("A", A, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.getBytes("B", B, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.getBytes("C", C, 59 * sizeof(float)) == 59 * sizeof(float);
+    ok &= pref.getBytes("D", D, 59 * sizeof(float)) == 59 * sizeof(float);
+    pref.end();
+    return ok;
+}
 
 
 // Dichiarazione dei PIN
@@ -45,8 +69,8 @@ const int CLEARBAT = 7;
 const int CSpin = 36;    //Chip Select pin per IMU
 const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
 
-Preferences prefs;
 
+//Tasks principali
 void Task1code(void* pvParam) {
     for (;;) {
         BLE_dataReady = 0;
@@ -119,48 +143,73 @@ void setup() {
     clearBattery(CLEARBAT);
 
     //Configura i pin per IMU e inizializza
-    digitalWrite(SA0pin, LOW);  //Con pin SA0 = 0, l'indirizzo � 6Ah (106d)
+    digitalWrite(SA0pin, LOW);  //Con pin SA0 = 0, l'indirizzo è 6Ah (106d)
     digitalWrite(CSpin, HIGH);
     setupIMU();
 
     //Inizializza BLE
     Serial.println("Starting BLE...");
     setupBLE_Client();
-    while (param_test == 0) {
-        param_test = readBLE_initial(SN_test);
+    /*
+    while (sn_test != true) {
+        sn_test = readBLE_initial(SN);
     }
-    Serial.print("Test terminato, valore acquisito: ");
-    Serial.println(param_test);
+    Serial.println("Serial Number inviato");
+    */
+
+    Serial.print("[BOOT] param: ");
+
+    // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
     setupBLE_Server();
+
+    // === Recupero parametri di calibrazione ===
+    bool calibOK = false;
+
+    // prova a fetchare dal server di calibrazione
+    calibOK = fetchCalibrationFromServer();
+    Serial.println(calibOK ? "[CAL] Parametri letti da BLE" : "[CAL] Lettura da BLE fallita");
+
+    // se BLE fallisce, prova da NVS
+    if (!calibOK) {
+        calibOK = loadCalibFromNVS(paramA, paramB, paramC, paramD);
+        Serial.println(calibOK ? "[CAL] Parametri caricati da NVS" : "[CAL] Nessun parametro valido in NVS");
+    }
+
+    // se arrivano da BLE, salvali in NVS per gli avvii successivi
+    if (calibOK) {
+        if (saveCalibToNVS(paramA, paramB, paramC, paramD)) {
+            Serial.println("[CAL] Parametri salvati in NVS");
+        }
+        else {
+            Serial.println("[CAL] Errore salvataggio NVS");
+        }
+        // stampa veloce di controllo
+        Serial.printf("[CAL] A[0]=%.6f B[0]=%.6f C[0]=%.6f D[0]=%.6f\n", paramA[0], paramB[0], paramC[0], paramD[0]);
+
+        // debug per vedere se i parametri di calibrazione sono ragionevoli
+        auto dbg = [](const char* name, float* v) {
+            int nz = 0; float mn = 1e9f, mx = -1e9f;
+            for (int i = 0; i < 59; i++) {
+                float x = v[i];
+                if (x != 0.0f)
+                    nz++;
+                if (x < mn)
+                    mn = x;
+                if (x > mx) mx = x;
+            }
+            Serial.printf("[CAL] %s: nz=%d  min=%.6f  max=%.6f  first=%.6f\n", name, nz, mn, mx, v[0]);
+        };
+        dbg("A", paramA); dbg("B", paramB); dbg("C", paramC); dbg("D", paramD);
+
+    }
+
+
+    // === Fine recupero parametri di calibrazione ===
 
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
     xTaskCreatePinnedToCore(Task2code, "Task2", 40000, NULL, 1, &Task2, 1);
 
-    /*
-    //Configura EEPROM e acquisisce/registra id device
-    EEPROM.begin(EEPROM_SIZE);
-    id_r = EEPROM.read(0);
-    */
-    //Configura partizione NVS
-    
-    prefs.begin("ID", false);    //legge area di memoria "0" che contiene id device
-    id_r = prefs.getInt("ID");
-    if (id_r == 55) {
-        //Carica primo set parametri
-        pinMode(led_r, OUTPUT);
-        digitalWrite(led_r, HIGH);
-        delay(1000);
-        digitalWrite(led_r, LOW);
-    }
-    if (id_r == 56) {
-        //Carica secondo set parametri
-        pinMode(led_b, OUTPUT);
-        digitalWrite(led_b, HIGH);
-        delay(1000);
-        digitalWrite(led_b, LOW);
-    }
-    //prefs.end();
     /*
     pinMode(led_r, OUTPUT);
     digitalWrite(led_r, HIGH);

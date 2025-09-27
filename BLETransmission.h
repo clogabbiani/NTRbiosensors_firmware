@@ -8,12 +8,25 @@
 #define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
 #define imuCHARACTERISTIC_UUID "d7395388-f82f-4b88-8f31-db216ece04f3"
 
+// ---- CALIBRATION CHARACTERISTICS (server) ----
+static BLEUUID CALIB_META_UUID("6b8b0002-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_A_UUID("6b8b0003-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_B_UUID("6b8b0004-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_C_UUID("6b8b0005-1b2b-3b4b-5b6b-7b8b9babcb01");
+static BLEUUID CALIB_D_UUID("6b8b0006-1b2b-3b4b-5b6b-7b8b9babcb01");
+
+// ---- SERVER ----
 BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 
-//BLEDescriptor timeDescriptor(BLEUUID((uint16_t)0x2902));
-//BLEDescriptor sensorDescriptor(BLEUUID((uint16_t)0x2902));
+// ---- helpers compatibili con le due versioni della BLE lib ----
+inline std::string toStdString(const std::string& s) {
+    return s;                                   // già std::string
+}
+inline std::string toStdString(const String& s) {
+    return std::string(s.c_str(), s.length());  // Arduino String -> std::string
+}
 
 void setupBLE_Server() {
     BLEDevice::init(bleServerName);
@@ -100,6 +113,7 @@ static BLEUUID SERVICE_UUID_CLIENT("4fafc201-1fb5-459e-8fcc-c5c9c331915d");
 static BLEUUID snCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a7");
 static BLEUUID paramCHARACTERISTIC_UUID("beb5483e-36e1-4688-b7f5-ea07361b26a1");
 
+
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
@@ -116,12 +130,12 @@ static BLEAdvertisedDevice* myDevice;
     Serial.println((char*)pData);
 }*/
 
-static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
+/*static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
     Serial.print("Notify callback for characteristic ");
     float b;
     b = pBLERemoteCharacteristic->readFloat();
     Serial.println(b);
-}
+}*/
 
 
 class MyClientCallback : public BLEClientCallbacks {
@@ -133,7 +147,7 @@ class MyClientCallback : public BLEClientCallbacks {
     }
 };
 
-uint32_t connectToServer(uint32_t val_w) {
+/*uint32_t connectToServer(uint32_t val_w) {
     Serial.print("Forming a connection to ");
     Serial.println(myDevice->getAddress().toString().c_str());
     BLEClient* pClient = BLEDevice::createClient();
@@ -180,7 +194,7 @@ uint32_t connectToServer(uint32_t val_w) {
     }
 
     connected = true;
-
+    /*
     paramCharacteristic = pRemoteService->getCharacteristic(paramCHARACTERISTIC_UUID);
     if (paramCharacteristic == nullptr) {
         Serial.print("Failed to find our param characteristic UUID: ");
@@ -188,6 +202,8 @@ uint32_t connectToServer(uint32_t val_w) {
     }
     Serial.println(" - Found our param characteristic");
     delay(1000);
+    */
+    /*
     uint32_t param;
 
     // Read the param value of the characteristic.
@@ -197,12 +213,22 @@ uint32_t connectToServer(uint32_t val_w) {
         Serial.println(param);
     }
     return param;
+
+    */
    
     //if (paramCharacteristic->canNotify()) {
       //  paramCharacteristic->registerForNotify(notifyCallback);
     //}
 
-}
+    // Read the param value of the characteristic.
+    /*if (paramCharacteristic->canRead()) {
+        val_param_ar = paramCharacteristic->readRawData();
+        Serial.print("The characteristic value was: ");
+    }*
+    return(1);
+
+
+}*/
 
 // Scan for BLE servers and find the first one that advertises the service we are looking for.
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
@@ -230,17 +256,82 @@ void setupBLE_Client() {
 }
 
 
-uint32_t readBLE_initial(uint32_t v) {
+/*bool readBLE_initial(uint32_t v) {
     if (doConnect == true) {
         if (uint32_t p = connectToServer(v)) {
             Serial.println("We are now connected to the BLE Server.");
-            return(p);
+            return(true);
         }
         else {
             Serial.println("We have failed to connect to the server; Restart your device to scan for nearby BLE server again.");
         }
         doConnect = false;
     }
+}*/
+
+bool fetchCalibrationFromServer() {
+
+    // 1. Controlla se il dispositivo è stato trovato dallo scan
+    if (!myDevice) {
+        Serial.println(" - Dispositivo non trovato dallo scan.");
+        return false;
+    }
+
+    // 2. Crea un nuovo client
+    BLEClient* pClient = BLEDevice::createClient();
+    if (!pClient) return false;
+    pClient->setClientCallbacks(new MyClientCallback());
+
+    // 3. Tenta la connessione
+    Serial.print("Forming a connection to ");
+    Serial.println(myDevice->getAddress().toString().c_str());
+    if (!pClient->connect(myDevice)) {
+        Serial.println(" - Connect failed.");
+        delete pClient; // Libera la memoria se la connessione fallisce
+        return false;
+    }
+    Serial.println(" - Connected to server.");
+
+    // 4. Ottieni il servizio e i caratteristici (UUID)
+    BLERemoteService* svc = pClient->getService(SERVICE_UUID_CLIENT);
+    if (!svc) {
+        Serial.println(" - Failed to find calibration service.");
+        pClient->disconnect();
+        return false;
+    }
+    Serial.println(" - Found our service.");
+
+    // 5. Funzione di supporto per leggere 64 float da una caratteristica
+    auto readFloats64 = [&](BLEUUID uuid, float* out64) -> bool {
+        BLERemoteCharacteristic* ch = svc->getCharacteristic(uuid);
+        if (!ch) return false;
+
+        // raw può essere String o std::string a seconda della lib
+        auto raw = ch->readValue();
+        std::string v = toStdString(raw);
+
+        if (v.size() != 64 * sizeof(float)) return false;   // 256 byte attesi
+        memcpy(out64, v.data(), 64 * sizeof(float));
+        return true;
+    };
+
+    // 6. Leggi i 4 blocchi
+    float A64[64], B64[64], C64[64], D64[64];
+    if (!readFloats64(CALIB_A_UUID, A64)) { pClient->disconnect(); return false; }
+    if (!readFloats64(CALIB_B_UUID, B64)) { pClient->disconnect(); return false; }
+    if (!readFloats64(CALIB_C_UUID, C64)) { pClient->disconnect(); return false; }
+    if (!readFloats64(CALIB_D_UUID, D64)) { pClient->disconnect(); return false; }
+
+    // 7. Copia i primi 59 nelle globali (dichiarate in main.cpp)
+    extern float paramA[59], paramB[59], paramC[59], paramD[59];
+    for (int i = 0; i < 59; i++) {
+        paramA[i] = A64[i]; paramB[i] = B64[i]; paramC[i] = C64[i]; paramD[i] = D64[i];
+    }
+
+    // 8. Disconnetti alla fine
+    pClient->disconnect();
+    Serial.println(" - Disconnected from server.");
+    return true;
 }
 
 

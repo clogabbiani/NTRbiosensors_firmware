@@ -32,8 +32,18 @@ const int CSpin = 36;    //Chip Select pin per IMU
 const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
 
 
-// --- NVS calibrazione ---
-//Funzioni per salvare e leggere i parametri di calibrazione in memoria NVS
+// --- NVS ---
+//Funzione per caricare il Serial Number da NVS
+bool loadSNFromNVS(uint32_t serial_number) {
+    Preferences pref;
+    if (!pref.begin("sn", true)) return false;
+    bool ok = true;
+    ok &= pref.getUInt("SN", serial_number) == sizeof(uint32_t);
+    pref.end();
+    return ok;
+}
+
+//Funzione per salvare i parametri di calibrazione in memoria NVS
 bool saveCalibToNVS(const float* A, const float* B, const float* C, const float* D) {
     Preferences pref;
     if (!pref.begin("calib", false)) return false;
@@ -46,6 +56,7 @@ bool saveCalibToNVS(const float* A, const float* B, const float* C, const float*
     return ok;
 }
 
+//Funzione per leggere i parametri di calibrazione da memoria NVS
 bool loadCalibFromNVS(float* A, float* B, float* C, float* D) {
     Preferences pref;
     if (!pref.begin("calib", true)) return false;
@@ -184,12 +195,12 @@ void setup() {
     //Inizializza BLE
     Serial.println("Starting BLE...");
     setupBLE_Client();
-    /*
+    bool sn_test = false;
     while (sn_test != true) {
-        sn_test = readBLE_initial(SN);
+        sn_test = sendSN_BLE(SN);
     }
     Serial.println("Serial Number inviato");
-    */
+   
 
     // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
     setupBLE_Server();

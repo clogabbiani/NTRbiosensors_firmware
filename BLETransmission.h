@@ -248,6 +248,58 @@ void setupBLE_Client() {
     }
 }*/
 
+bool sendSN_BLE(uint32_t serial_num) {
+    BLEClient* pClient = BLEDevice::createClient();
+    //Serial.println(" - Created client");
+    pClient->setClientCallbacks(new MyClientCallback());
+    // Connect to the remove BLE Server.
+    pClient->connect(myDevice);
+    //Serial.println(" - Connected to server");
+    // Obtain a reference to the service we are after in the remote BLE server.
+    BLERemoteService* pRemoteService = pClient->getService(SERVICE_UUID_CLIENT);
+    if (pRemoteService == nullptr) {
+        Serial.print("Failed to find our service UUID: ");
+        Serial.println(SERVICE_UUID_CLIENT.toString().c_str());
+        pClient->disconnect();
+        return false;
+    }
+    //Serial.println(" - Found our service");
+    // Obtain a reference to the characteristic in the service of the remote BLE server.
+    snCharacteristic = pRemoteService->getCharacteristic(snCHARACTERISTIC_UUID);
+    if (snCharacteristic == nullptr) {
+        Serial.print("Failed to find our characteristic UUID: ");
+        Serial.println(snCHARACTERISTIC_UUID.toString().c_str());
+        pClient->disconnect();
+        return false;
+    }
+    //Serial.println(" - Found our characteristic");
+
+    uint32_t value;
+
+    // Read the value of the characteristic.
+    if (snCharacteristic->canRead()) {
+        value = snCharacteristic->readUInt32();
+        Serial.print("The sn characteristic value was: ");
+        Serial.println(value);
+    }
+    else {
+        return false;
+    }
+
+    uint32_t to_w;
+
+    if (snCharacteristic->canWrite()) {
+        to_w = serial_num;
+        snCharacteristic->writeValue((String)to_w);
+        Serial.print("Scritto sulla caratteristica sn valore ");
+        Serial.println(to_w);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 bool fetchCalibrationFromServer() {
 
     // 1. Controlla se il dispositivo è stato trovato dallo scan

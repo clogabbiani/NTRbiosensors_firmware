@@ -1,5 +1,8 @@
 // Data acquisition
 
+#pragma once
+#include <math.h>
+
 #define NUM_SENSORS 59
 #define MUX_COUNT 4
 #define THRESHOLD 30000 // Soglia in grammi
@@ -47,10 +50,28 @@ int selectADCpin(int channel, const int* adcPins) {
 // kg = c * ((V - a) / (d - V))^(1/b)
 extern float paramA[59], paramB[59], paramC[59], paramD[59];
 
+// contatori diagnostica
+uint32_t errDomain[59];
+uint32_t errSaturation[59];
+
 static inline float clampf(float x, float lo, float hi) {
     return (x < lo) ? lo : (x > hi) ? hi : x;
 }
 float convertADCValue(int adcValue, int sensorIndex) {
+    float a = paramA[sensorIndex];
+    float b = paramB[sensorIndex];
+    float c = paramC[sensorIndex];
+    float d = paramD[sensorIndex];
+    float V = (adcValue / 4095.0f) * 3.3f;
+    float x;
+    x = c * pow(abs((V - a) / (d - V)),(1/b));
+    // debug sui parametri di calibrazione
+    if (sensorIndex < 5) {
+        Serial.printf("Convert[%d]: ADC=%d V=%.3f params: a=%.3f b=%.3f c=%.3f d=%.3f\n",
+            sensorIndex, adcValue, V, a, b, c, d);
+    }
+    return x;
+    /*
     // 12 bit su 3.3V
     const float V = (adcValue / 4095.0f) * 3.3f;
 
@@ -62,36 +83,30 @@ float convertADCValue(int adcValue, int sensorIndex) {
     const float c = paramC[sensorIndex];
     const float d = paramD[sensorIndex];
 
+    // accept both orders: use lo=min(a,d), hi=max(a,d)
+    const float lo = fminf(a, d);
+    const float hi = fmaxf(a, d);
+
+    // basic guards
+    if (lo == hi || b == 0.0f || c <= 0.0f) { errDomain[sensorIndex]++; return 0.0f; }
+    if (!(V > lo && V < hi)) { errDomain[sensorIndex]++; return 0.0f; }
+
     // debug sui parametri di calibrazione
     if (sensorIndex < 5) {
         Serial.printf("Convert[%d]: ADC=%d V=%.3f params: a=%.3f b=%.3f c=%.3f d=%.3f\n",
             sensorIndex, adcValue, V, a, b, c, d);
     }
 
-    // Protezioni:
-    // - b vicino a 0 -> eviti divisione 1/b
-    // - (d - V) e (V - a) devono essere > 0 per avere argomento positivo
-    if (fabsf(b) < 1e-6f) return 0.0f;  // oppure V
+    // inverse asymptotic model with sorted endpoints
+    const float numer = (V - lo);
+    const float denom = (hi - V);
+    const float ratio = numer / denom;
+    if (!(ratio > 0.0f) || !isfinite(ratio)) { errDomain[sensorIndex]++; return 0.0f; }
 
-    // clamp V dentro (a+eps, d-eps)
-    const float eps = 1e-6f;
-    float Vy = clampf(V, a + eps, d - eps);
-
-    float num = Vy - a;
-    float den = d - Vy;
-    if (den <= 0.0f || num <= 0.0f) return 0.0f; // fuori dominio → 0
-
-    float ratio = num / den;
-
-    // Se per rumore ratio è negativo o zero, proteggi
-    if (ratio <= 0.0f) return 0.0f;
-
-    // kg
-    float kg = c * powf(ratio, 1.0f / b);
-
-    // opzionale: clamp kg a un range atteso fisicamente
-    if (!isfinite(kg)) kg = 0.0f;
-    return kg;
+    float x = c * powf(ratio, 1.0f / b);
+    if (!isfinite(x) || x < 0.0f) { errSaturation[sensorIndex]++; return 0.0f; }
+    return x;
+    */
 }
 
 // funzione di supporto: controllare che i valori siano accettabili

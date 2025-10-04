@@ -221,7 +221,7 @@ void setup() {
 
     //LED verde lampeggia tre volte per indicare fine setup
     digitalWrite(green_led, HIGH);
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         pinMode(green_led, OUTPUT);
         digitalWrite(green_led, LOW);
         delay(1000);

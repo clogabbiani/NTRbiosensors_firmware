@@ -35,6 +35,15 @@ const int SA0pin = 35;   //SA0 pin per selezione indirizzo per IMU
 
 
 // --- NVS ---
+ 
+//Funzione debug per scrivere il Serial Number in NVS
+bool writeSNinNVS_debug() {
+    Preferences pref;
+    if (!pref.begin("sn", true)) return false;
+    pref.putUInt("SN", 2000);
+    return true;
+}
+
 //Funzione per caricare il Serial Number da NVS
 bool loadSNFromNVS(uint32_t serial_number) {
     Preferences pref;
@@ -201,7 +210,8 @@ void setup() {
     //Inizializza BLE
     Serial.println("Starting BLE...");
     setupBLE_Client();
-    /*loadSNFromNVS(SN);
+    /*writeSNinNVS_debug();
+    loadSNFromNVS(SN);
     bool sn_test = false;
     while (sn_test != true) {
         sn_test = sendSN_BLE(SN);

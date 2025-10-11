@@ -67,8 +67,7 @@ float convertADCValue(int adcValue, int sensorIndex) {
     x = c * pow(abs((V - a) / (d - V)),(1/b));
     // debug sui parametri di calibrazione
     if (sensorIndex < 5) {
-        Serial.printf("Convert[%d]: ADC=%d V=%.3f params: a=%.3f b=%.3f c=%.3f d=%.3f\n",
-            sensorIndex, adcValue, V, a, b, c, d);
+        Serial.printf("Convert[%d]: ADC=%d V=%.3f params: a=%.3f b=%.3f c=%.3f d=%.3f\n",sensorIndex, adcValue, V, a, b, c, d);
     }
     return x;
     /*
@@ -148,8 +147,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 			// Converte il valore dell'ADC in un'unità di misura specifica
             // debug per la conversione in kg
             float kgValue = convertADCValue(sensorValue, sensorIndex);
-            Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue,
-                (sensorValue / 4095.0f) * 3.3f, kgValue);
+            Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue, (sensorValue / 4095.0f) * 3.3f, kgValue);
             /*if (sensorIndex < 5 && kgValue != 0.0f) {
                 Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",
                     sensorIndex, sensorValue,

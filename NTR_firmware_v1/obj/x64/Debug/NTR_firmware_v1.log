@@ -1,0 +1,7 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018: errore imprevisto dell'attività "SetEnv".
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018: System.ArgumentException: Lunghezza eccessiva del nome o del valore della variabile d'ambiente.
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018:    in System.Environment.SetEnvironmentVariable(String variable, String value)
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018:    in System.Environment.SetEnvironmentVariable(String variable, String value, EnvironmentVariableTarget target)
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018:    in Microsoft.Build.CPPTasks.SetEnv.Execute()
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018:    in Microsoft.Build.BackEnd.TaskExecutionHost.Execute()
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.Cpp.Current.targets(116,5): error MSB4018:    in Microsoft.Build.BackEnd.TaskBuilder.<ExecuteInstantiatedTask>d__26.MoveNext()

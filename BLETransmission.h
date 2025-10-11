@@ -18,18 +18,36 @@ inline std::string toStdString(const String& s) {
 #define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
 #define imuCHARACTERISTIC_UUID "d7395388-f82f-4b88-8f31-db216ece04f3"
 
+#define CALIB_A_UUID "6b8b0003-1b2b-3b4b-5b6b-7b8b9babcb01" 
+#define CALIB_B_UUID "6b8b0004-1b2b-3b4b-5b6b-7b8b9babcb01"
+#define CALIB_C_UUID "6b8b0005-1b2b-3b4b-5b6b-7b8b9babcb01"
+#define CALIB_D_UUID "6b8b0006-1b2b-3b4b-5b6b-7b8b9babcb01"
+
+#define status_UUID "6b8b0001-1b2b-3b4b-5b6b-7b8b9babcb00"
+
 BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+
+BLECharacteristic AcalibCharacteristic(CALIB_A_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+BLECharacteristic BcalibCharacteristic(CALIB_B_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+BLECharacteristic CcalibCharacteristic(CALIB_C_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+BLECharacteristic DcalibCharacteristic(CALIB_D_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+BLECharacteristic statusCharacteristic(status_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
 
 void setupBLE_Server() {
     BLEDevice::init(bleServerName);
     BLEServer* pServer = BLEDevice::createServer();
     pServer->getPeerMTU(517);
     BLEService* pService = pServer->createService(SERVICE_UUID_SERVER);
-    pService->addCharacteristic(&timeCharacteristic);
+    //pService->addCharacteristic(&timeCharacteristic);
     pService->addCharacteristic(&sensorCharacteristic);
     //pService->addCharacteristic(&imuCharacteristic);
+    pService->addCharacteristic(&AcalibCharacteristic);
+    pService->addCharacteristic(&BcalibCharacteristic);
+    pService->addCharacteristic(&CcalibCharacteristic);
+    pService->addCharacteristic(&DcalibCharacteristic);
+    pService->addCharacteristic(&statusCharacteristic);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID_SERVER);
@@ -61,6 +79,7 @@ void transmitSensorData(float* sens) {
         array_256[4 * i + 1] = array_4[1];
         array_256[4 * i + 2] = array_4[2];
         array_256[4 * i + 3] = array_4[3];
+
     }
 
     sensorCharacteristic.setValue(array_256, 256);
@@ -97,6 +116,57 @@ void transmitDataPacket(uint32_t t, float* sens, float *imu) {
     transmitSensorData(sens);
     //transmitImuData(imu);
 }
+
+bool readFloats64(BLECharacteristic ble_charac, float* array_64) {
+    uint8_t* array_256;
+    array_256 = ble_charac.getData();
+    
+    /*for (int i = 0; i < 64; i++) {
+        float val_s;
+        ((uint8_t*)&val_s)[0] = array_256[4 * i];
+        ((uint8_t*)&val_s)[1] = array_256[4 * i + 1];
+        ((uint8_t*)&val_s)[2] = array_256[4 * i + 2];
+        ((uint8_t*)&val_s)[3] = array_256[4 * i + 3];
+        array_64[i] = val_s;
+    }*/
+
+    for (int i = 0; i < 64; i++) {
+        memcpy(&array_64[i], &array_256[4 * i], sizeof(float));
+    }
+    return true;
+}
+
+bool acquireCalibParam() {
+    String status = "0";
+    while (status != "1") {
+        status = statusCharacteristic.getValue();
+        Serial.println(status);
+    }
+
+    float A64[64], B64[64], C64[64], D64[64];
+    /*if (!readFloats64(CALIB_A_UUID, A64)) { return false; }
+    if (!readFloats64(CALIB_B_UUID, B64)) {return false; }
+    if (!readFloats64(CALIB_C_UUID, C64)) {return false; }
+    if (!readFloats64(CALIB_D_UUID, D64)) {return false; }*/
+
+    readFloats64(CALIB_A_UUID, A64);
+    readFloats64(CALIB_B_UUID, B64);
+    readFloats64(CALIB_C_UUID, C64);
+    readFloats64(CALIB_D_UUID, D64);
+
+    //Copia i primi 59 nelle globali (dichiarate in main.cpp)
+    extern float paramA[59], paramB[59], paramC[59], paramD[59];
+    for (int i = 0; i < 59; i++) {
+        paramA[i] = A64[i]; paramB[i] = B64[i]; paramC[i] = C64[i]; paramD[i] = D64[i];
+        Serial.println();
+        Serial.print(paramA[i]);
+        Serial.print(paramB[i]);
+        Serial.print(paramC[i]);
+        Serial.print(paramD[i]);
+    }
+    return true;
+}
+/*
 
 // ---- CLIENT ----
 #define bleServerName_client "ESP32_NTR_client"
@@ -268,6 +338,6 @@ bool fetchCalibrationFromServer() {
     return true;
 }
 
-
+*/
 
 

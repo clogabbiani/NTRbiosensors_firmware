@@ -91,7 +91,9 @@ void handleCalibParam() {
     bool calibOK = false;
 
     // prova a fetchare dal server di calibrazione
-    calibOK = fetchCalibrationFromServer();
+    while (!calibOK) {
+        calibOK = acquireCalibParam();
+    }
     Serial.println(calibOK ? "[CAL] Parametri letti da BLE" : "[CAL] Lettura da BLE fallita");
 
     // se BLE fallisce, prova da NVS
@@ -209,8 +211,8 @@ void setup() {
 
     //Inizializza BLE
     Serial.println("Starting BLE...");
-    setupBLE_Client();
-    /*writeSNinNVS_debug();
+    /*setupBLE_Client();
+    writeSNinNVS_debug();
     loadSNFromNVS(SN);
     bool sn_test = false;
     while (sn_test != true) {

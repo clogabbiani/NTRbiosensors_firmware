@@ -98,7 +98,7 @@ void handleCalibParam() {
 
     // se BLE fallisce, prova da NVS
     if (!calibOK) {
-        calibOK = loadCalibFromNVS(paramA, paramB, paramC, paramD);
+        //calibOK = loadCalibFromNVS(paramA, paramB, paramC, paramD);
         Serial.println(calibOK ? "[CAL] Parametri caricati da NVS" : "[CAL] Nessun parametro valido in NVS");
     }
 
@@ -222,10 +222,12 @@ void setup() {
    
 
     // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
-    setupBLE_Server();
+    setupBLE_Server_Calib();
 
     //Recupera parametri di caibrazione (dal server BLE o da locale)
     handleCalibParam();
+
+    setupBLE_Server();
 
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);

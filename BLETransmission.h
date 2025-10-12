@@ -18,6 +18,7 @@ inline std::string toStdString(const String& s) {
 #define sensorCHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a9"
 #define imuCHARACTERISTIC_UUID "d7395388-f82f-4b88-8f31-db216ece04f3"
 
+#define SERVICE_UUID_SERVER_CALIB "4fafc202-1fb5-459e-8fcc-c5c9c331914b"
 #define CALIB_A_UUID "6b8b0003-1b2b-3b4b-5b6b-7b8b9babcb01" 
 #define CALIB_B_UUID "6b8b0004-1b2b-3b4b-5b6b-7b8b9babcb01"
 #define CALIB_C_UUID "6b8b0005-1b2b-3b4b-5b6b-7b8b9babcb01"
@@ -35,19 +36,39 @@ BLECharacteristic CcalibCharacteristic(CALIB_C_UUID, BLECharacteristic::PROPERTY
 BLECharacteristic DcalibCharacteristic(CALIB_D_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
 BLECharacteristic statusCharacteristic(status_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
 
-void setupBLE_Server() {
+void setupBLE_Server_Calib() {
     BLEDevice::init(bleServerName);
     BLEServer* pServer = BLEDevice::createServer();
     pServer->getPeerMTU(517);
-    BLEService* pService = pServer->createService(SERVICE_UUID_SERVER);
+    BLEService* pService = pServer->createService(SERVICE_UUID_SERVER_CALIB);
     //pService->addCharacteristic(&timeCharacteristic);
-    pService->addCharacteristic(&sensorCharacteristic);
+    //pService->addCharacteristic(&sensorCharacteristic);
     //pService->addCharacteristic(&imuCharacteristic);
     pService->addCharacteristic(&AcalibCharacteristic);
     pService->addCharacteristic(&BcalibCharacteristic);
     pService->addCharacteristic(&CcalibCharacteristic);
     pService->addCharacteristic(&DcalibCharacteristic);
     pService->addCharacteristic(&statusCharacteristic);
+    pService->start();
+    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID_SERVER_CALIB);
+    pAdvertising->setScanResponse(true);
+    BLEDevice::startAdvertising();
+}
+
+void setupBLE_Server() {
+    BLEDevice::init(bleServerName);
+    BLEServer* pServer = BLEDevice::createServer();
+    pServer->getPeerMTU(517);
+    BLEService* pService = pServer->createService(SERVICE_UUID_SERVER);
+    pService->addCharacteristic(&timeCharacteristic);
+    pService->addCharacteristic(&sensorCharacteristic);
+    //pService->addCharacteristic(&imuCharacteristic);
+    //pService->addCharacteristic(&AcalibCharacteristic);
+    //pService->addCharacteristic(&BcalibCharacteristic);
+    //pService->addCharacteristic(&CcalibCharacteristic);
+    //pService->addCharacteristic(&DcalibCharacteristic);
+    //pService->addCharacteristic(&statusCharacteristic);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID_SERVER);
@@ -111,6 +132,19 @@ void transmitSensorData(float* sens) {
     imuCharacteristic.notify();
 }*/
 
+void populate_calib() {
+    uint8_t array_256_zero[256] = { 0 };
+    AcalibCharacteristic.setValue(array_256_zero, 256);
+    BcalibCharacteristic.setValue(array_256_zero, 256);
+    CcalibCharacteristic.setValue(array_256_zero, 256);
+    DcalibCharacteristic.setValue(array_256_zero, 256);
+    //AcalibCharacteristic.notify();
+    //BcalibCharacteristic.notify();
+    //CcalibCharacteristic.notify();
+    //DcalibCharacteristic.notify();
+
+}
+
 void transmitDataPacket(uint32_t t, float* sens, float *imu) {
     transmitTimeData(t);
     transmitSensorData(sens);
@@ -137,10 +171,10 @@ bool readFloats64(BLECharacteristic ble_charac, float* array_64) {
 }
 
 bool acquireCalibParam() {
+    populate_calib();
     String status = "0";
     while (status != "1") {
         status = statusCharacteristic.getValue();
-        Serial.println(status);
     }
 
     float A64[64], B64[64], C64[64], D64[64];
@@ -148,11 +182,11 @@ bool acquireCalibParam() {
     if (!readFloats64(CALIB_B_UUID, B64)) {return false; }
     if (!readFloats64(CALIB_C_UUID, C64)) {return false; }
     if (!readFloats64(CALIB_D_UUID, D64)) {return false; }*/
-
-    readFloats64(CALIB_A_UUID, A64);
-    readFloats64(CALIB_B_UUID, B64);
-    readFloats64(CALIB_C_UUID, C64);
-    readFloats64(CALIB_D_UUID, D64);
+    delay(1000);
+    readFloats64(AcalibCharacteristic, A64);
+    readFloats64(BcalibCharacteristic, B64);
+    readFloats64(CcalibCharacteristic, C64);
+    readFloats64(DcalibCharacteristic, D64);
 
     //Copia i primi 59 nelle globali (dichiarate in main.cpp)
     extern float paramA[59], paramB[59], paramC[59], paramD[59];

@@ -46,13 +46,12 @@ int selectADCpin(int channel, const int* adcPins) {
 }
 
 // funzione di supporto: converte ADC value in un'unità di misura specifica (di pressione)
-// conversione usando i parametri di calibrazione secondo modello asintotico inverso ---
 // kg = c * ((V - a) / (d - V))^(1/b)
 extern float paramA[59], paramB[59], paramC[59], paramD[59];
 
 // contatori diagnostica
-uint32_t errDomain[59];
-uint32_t errSaturation[59];
+//uint32_t errDomain[59];
+//uint32_t errSaturation[59];
 
 static inline float clampf(float x, float lo, float hi) {
     return (x < lo) ? lo : (x > hi) ? hi : x;
@@ -66,9 +65,9 @@ float convertADCValue(int adcValue, int sensorIndex) {
     float x;
     x = c * pow(abs((V - a) / (d - V)),(1/b));
     // debug sui parametri di calibrazione
-    if (sensorIndex < 5) {
+    /*if (sensorIndex < 5) {
         Serial.printf("Convert[%d]: ADC=%d V=%.3f params: a=%.3f b=%.3f c=%.3f d=%.3f\n",sensorIndex, adcValue, V, a, b, c, d);
-    }
+    }*/
     return x;
     /*
     // 12 bit su 3.3V
@@ -143,15 +142,18 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
                 Serial.print("Debug first 8 sensors");
                 Serial.printf("Sensor[%d]: ADC=%d ", sensorIndex, sensorValue);
             }*/
-
+            
 			// Converte il valore dell'ADC in un'unità di misura specifica
-            // debug per la conversione in kg
-            float kgValue = convertADCValue(sensorValue, sensorIndex);
-            Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue, (sensorValue / 4095.0f) * 3.3f, kgValue);
+            float kgValue;
+            if (sensorIndex < 59) {
+                kgValue = convertADCValue(sensorValue, sensorIndex);
+            }
+            else {
+                kgValue = 0.00;
+            }
+                //Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue, (sensorValue / 4095.0f) * 3.3f, kgValue);
             /*if (sensorIndex < 5 && kgValue != 0.0f) {
-                Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",
-                    sensorIndex, sensorValue,
-                    (sensorValue / 4095.0f) * 3.3f, kgValue);
+                Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue,(sensorValue / 4095.0f) * 3.3f, kgValue);
             }*/
             sensorData[sensorIndex] = kgValue;
 

@@ -39,16 +39,16 @@ BLECharacteristic statusCharacteristic(status_UUID, BLECharacteristic::PROPERTY_
 void setupBLE_Server_Calib() {
     BLEDevice::init(bleServerName);
     BLEServer* pServer = BLEDevice::createServer();
+    //BLEDevice::setMTU(500);
     pServer->getPeerMTU(517);
     BLEService* pService = pServer->createService(SERVICE_UUID_SERVER_CALIB);
-    //pService->addCharacteristic(&timeCharacteristic);
-    //pService->addCharacteristic(&sensorCharacteristic);
-    //pService->addCharacteristic(&imuCharacteristic);
     pService->addCharacteristic(&AcalibCharacteristic);
     pService->addCharacteristic(&BcalibCharacteristic);
     pService->addCharacteristic(&CcalibCharacteristic);
     pService->addCharacteristic(&DcalibCharacteristic);
     pService->addCharacteristic(&statusCharacteristic);
+    //pService->addCharacteristic(&timeCharacteristic);
+    //pService->addCharacteristic(&sensorCharacteristic);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID_SERVER_CALIB);
@@ -58,17 +58,13 @@ void setupBLE_Server_Calib() {
 
 void setupBLE_Server() {
     BLEDevice::init(bleServerName);
+    //BLEDevice::setMTU(500);
     BLEServer* pServer = BLEDevice::createServer();
     pServer->getPeerMTU(517);
+    //pServer->updatePeerMTU(0, 256);
     BLEService* pService = pServer->createService(SERVICE_UUID_SERVER);
     pService->addCharacteristic(&timeCharacteristic);
     pService->addCharacteristic(&sensorCharacteristic);
-    //pService->addCharacteristic(&imuCharacteristic);
-    //pService->addCharacteristic(&AcalibCharacteristic);
-    //pService->addCharacteristic(&BcalibCharacteristic);
-    //pService->addCharacteristic(&CcalibCharacteristic);
-    //pService->addCharacteristic(&DcalibCharacteristic);
-    //pService->addCharacteristic(&statusCharacteristic);
     pService->start();
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID_SERVER);
@@ -76,9 +72,35 @@ void setupBLE_Server() {
     BLEDevice::startAdvertising();
 }
 
+void setupBLE_multiple() {
+    BLEDevice::init(bleServerName);
+    BLEServer* pServer = BLEDevice::createServer();
+    //pServer->getPeerMTU(517);
+    BLEDevice::setMTU(517);
+
+    BLEService* pService = pServer->createService(SERVICE_UUID_SERVER_CALIB);
+    pService->addCharacteristic(&AcalibCharacteristic);
+    pService->addCharacteristic(&BcalibCharacteristic);
+    pService->addCharacteristic(&CcalibCharacteristic);
+    pService->addCharacteristic(&DcalibCharacteristic);
+    pService->addCharacteristic(&statusCharacteristic);
+    pService->start();
+
+    BLEService* pService2 = pServer->createService(SERVICE_UUID_SERVER);
+    pService2->addCharacteristic(&timeCharacteristic);
+    pService2->addCharacteristic(&sensorCharacteristic);
+    pService2->start();
+
+    BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID_SERVER_CALIB);
+    pAdvertising->addServiceUUID(SERVICE_UUID_SERVER);
+    pAdvertising->setScanResponse(true);
+    BLEDevice::startAdvertising();
+}
+
 void transmitTimeData(uint32_t t) {
     timeCharacteristic.setValue(t);
-    timeCharacteristic.notify();
+    //timeCharacteristic.notify();
 }
 
 void transmitSensorData(float* sens) {
@@ -104,7 +126,7 @@ void transmitSensorData(float* sens) {
     }
 
     sensorCharacteristic.setValue(array_256, 256);
-    sensorCharacteristic.notify();
+    //sensorCharacteristic.notify();
 }
 
 /*void transmitImuData(float* Imusens) {
@@ -194,8 +216,11 @@ bool acquireCalibParam() {
         paramA[i] = A64[i]; paramB[i] = B64[i]; paramC[i] = C64[i]; paramD[i] = D64[i];
         Serial.println();
         Serial.print(paramA[i]);
+        Serial.print(" ");
         Serial.print(paramB[i]);
+        Serial.print(" ");
         Serial.print(paramC[i]);
+        Serial.print(" ");
         Serial.print(paramD[i]);
     }
     return true;

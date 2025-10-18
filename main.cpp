@@ -222,13 +222,15 @@ void setup() {
    
 
     // AVVIA SEMPRE IL SERVER → l’app ora ti vede come periferica BLE
-    setupBLE_Server_Calib();
+    //setupBLE_Server_Calib();
+
+    setupBLE_multiple();
 
     //Recupera parametri di caibrazione (dal server BLE o da locale)
     handleCalibParam();
 
-    setupBLE_Server();
-
+    //setupBLE_Server();
+    
     //Crea task per multicore
     xTaskCreatePinnedToCore(Task1code, "Task1", 40000, NULL, 1, &Task1, 0);
     xTaskCreatePinnedToCore(Task2code, "Task2", 40000, NULL, 1, &Task2, 1);

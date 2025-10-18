@@ -151,7 +151,7 @@ void transmitSensorData(float* sens) {
     }
 
     imuCharacteristic.setValue(array_24, 24);
-    imuCharacteristic.notify();
+    //imuCharacteristic.notify();
 }*/
 
 void populate_calib() {

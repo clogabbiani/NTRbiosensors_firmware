@@ -155,6 +155,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
             /*if (sensorIndex < 5 && kgValue != 0.0f) {
                 Serial.printf("S[%d]: ADC=%d V=%.3f kg=%.3f\n",sensorIndex, sensorValue,(sensorValue / 4095.0f) * 3.3f, kgValue);
             }*/
+
             sensorData[sensorIndex] = kgValue;
 
 			// Controlla che i valori siano accettabili
@@ -162,5 +163,7 @@ void acquireData(float* sensorData, const int* enPins, const int* addPins, const
 
         }
     }
-
+    //sensorData[48] = sensorData[58];
+    //sensorData[49] = sensorData[0];
+    //Serial.println(sensorData[48]);
 }

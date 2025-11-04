@@ -1,6 +1,8 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <BLE2902.h>
+
 
 // ---- helpers compatibili con le due versioni della BLE lib ----
 inline std::string toStdString(const std::string& s) {
@@ -29,6 +31,8 @@ inline std::string toStdString(const String& s) {
 BLECharacteristic timeCharacteristic(timeCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic sensorCharacteristic(sensorCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
 BLECharacteristic imuCharacteristic(imuCHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+
+BLEDescriptor sensorCharacteristicDescriptor(BLEUUID((uint16_t)0x2902));
 
 BLECharacteristic AcalibCharacteristic(CALIB_A_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
 BLECharacteristic BcalibCharacteristic(CALIB_B_UUID, BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
@@ -89,6 +93,7 @@ void setupBLE_multiple() {
     BLEService* pService2 = pServer->createService(SERVICE_UUID_SERVER);
     pService2->addCharacteristic(&timeCharacteristic);
     pService2->addCharacteristic(&sensorCharacteristic);
+    sensorCharacteristic.addDescriptor(&sensorCharacteristicDescriptor);
     pService2->start();
 
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
@@ -126,7 +131,7 @@ void transmitSensorData(float* sens) {
     }
 
     sensorCharacteristic.setValue(array_256, 256);
-    //sensorCharacteristic.notify();
+    sensorCharacteristic.notify();
 }
 
 /*void transmitImuData(float* Imusens) {
